@@ -879,17 +879,32 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
 
         @Override
         public boolean offer(Processor<S> processor) {
+
+            Processor <S>proc = processor;
+
+            // if a timeout has happened, a running process may still be hanging onto the request or response,
+            // so it it not safe to reuse them. Instead, we unregister them.
+            if (proc.isTimedout()) {
+                handler.unregister(proc);
+                proc = null;
+            }
+
             int cacheSize = handler.getProtocol().getProcessorCache();
             boolean offer = cacheSize == -1 ? true : size.get() < cacheSize;
             //avoid over growing our cache or add after we have stopped
             boolean result = false;
             if (offer) {
+                if (proc == null) {
+                    proc = handler.createProcessor();
+                }
+
                 result = super.offer(processor);
                 if (result) {
                     size.incrementAndGet();
                 }
             }
-            if (!result) handler.unregister(processor);
+
+            if (!result) handler.unregister(proc);
             return result;
         }
 

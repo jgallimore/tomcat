@@ -210,4 +210,8 @@ public abstract class AbstractProcessor<S>
     public final void setSslSupport(SSLSupport sslSupport) {
         // NOOP
     }
+    
+    public boolean isTimedout() {
+        return false;
+    }
 }

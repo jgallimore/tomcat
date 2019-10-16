@@ -51,6 +51,8 @@ public abstract class AbstractProcessor<S> implements ActionHook, Processor<S> {
     protected SocketWrapper<S> socketWrapper = null;
     private int maxCookieCount = 200;
 
+    protected volatile boolean timedout = false;
+
 
     /**
      * Error state for the request/response currently being processed.
@@ -350,5 +352,9 @@ public abstract class AbstractProcessor<S> implements ActionHook, Processor<S> {
     @Override
     public final AsyncStateMachine<S> getAsyncStateMachine() {
         return asyncStateMachine;
+    }
+
+    public boolean isTimedout() {
+        return this.timedout;
     }
 }

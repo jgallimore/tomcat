@@ -921,6 +921,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
         case ASYNC_TIMEOUT: {
             AtomicBoolean result = (AtomicBoolean) param;
             result.set(asyncStateMachine.asyncTimeout());
+            this.timedout = true;
             break;
         }
         case ASYNC_RUN: {

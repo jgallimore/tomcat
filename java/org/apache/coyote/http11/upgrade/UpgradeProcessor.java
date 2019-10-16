@@ -169,4 +169,8 @@ public abstract class UpgradeProcessor<S> implements Processor<S> {
     public final AsyncStateMachine<S> getAsyncStateMachine() {
         return null;
     }
+    
+    public boolean isTimedout() {
+        return false;
+    }
 }

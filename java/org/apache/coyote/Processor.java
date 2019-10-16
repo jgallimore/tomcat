@@ -73,4 +73,6 @@ public interface Processor<S> {
     void setSslSupport(SSLSupport sslSupport);
 
     AsyncStateMachine<S> getAsyncStateMachine();
+
+    boolean isTimedout();
 }
