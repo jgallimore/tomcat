@@ -803,6 +803,10 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
                         processor, socket));
             }
 
+            getLog().info("In process(), processor=" +
+                ((processor == null) ? "null" : processor) +
+                ", recycledProcessor=" + recycledProcessors);
+
             // Timeouts are calculated on a dedicated thread and then
             // dispatched. Because of delays in the dispatch process, the
             // timeout may no longer be required. Check here and avoid
@@ -1014,19 +1018,19 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
                     release(processor);
                 }
                 return state;
-            } catch(java.net.SocketException e) {
+            } catch (java.net.SocketException e) {
                 // SocketExceptions are normal
                 getLog().debug(sm.getString(
-                        "abstractConnectionHandler.socketexception.debug"), e);
+                    "abstractConnectionHandler.socketexception.debug"), e);
             } catch (java.io.IOException e) {
                 // IOExceptions are normal
                 getLog().debug(sm.getString(
-                        "abstractConnectionHandler.ioexception.debug"), e);
+                    "abstractConnectionHandler.ioexception.debug"), e);
             } catch (ProtocolException e) {
                 // Protocol exceptions normally mean the client sent invalid or
                 // incomplete data.
                 getLog().debug(sm.getString(
-                        "abstractConnectionHandler.protocolexception.debug"), e);
+                    "abstractConnectionHandler.protocolexception.debug"), e);
             }
             // Future developers: if you discover any other
             // rare-but-nonfatal exceptions, catch them here, and log as
@@ -1087,6 +1091,10 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
          *                  the socket)
          */
         private void release(Processor processor) {
+            getLog().info("Entering release(), processor=" +
+                ((processor == null) ? "null" : processor) +
+                ", recycledProcessor=" + recycledProcessors);
+
             if (processor != null) {
                 processor.recycle();
                 if (processor.isUpgrade()) {
@@ -1105,6 +1113,11 @@ public abstract class AbstractProtocol<S> implements ProtocolHandler,
                     // recycledProcessors since that pool is only for AJP or
                     // HTTP processors
                     recycledProcessors.push(processor);
+
+                    getLog().info("In release(), pushed processor=" +
+                        ((processor == null) ? "null" : processor) +
+                        " into pool, recycledProcessor=" + recycledProcessors);
+
                     if (getLog().isDebugEnabled()) {
                         getLog().debug("Pushed Processor [" + processor + "]");
                     }

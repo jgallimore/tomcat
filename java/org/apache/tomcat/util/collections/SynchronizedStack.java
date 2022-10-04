@@ -16,6 +16,9 @@
  */
 package org.apache.tomcat.util.collections;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 /**
  * This is intended as a (mostly) GC-free alternative to
  * {@link java.util.Stack} when the requirement is to create a pool of re-usable
@@ -101,5 +104,22 @@ public class SynchronizedStack<T> {
         // garbage.
         stack = newStack;
         size = newSize;
+    }
+
+    @Override
+    public String toString() {
+        return "SynchronizedStack { " + Arrays
+            .stream(stack)
+            .map(o -> toString(o))
+            .collect(Collectors.joining(", "))
+            + " }";
+    }
+
+    public String toString(final Object obj) {
+        if (obj == null) {
+            return "null";
+        }
+
+        return obj.toString();
     }
 }

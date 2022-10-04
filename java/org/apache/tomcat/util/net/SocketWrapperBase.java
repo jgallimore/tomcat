@@ -18,6 +18,8 @@ package org.apache.tomcat.util.net;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.channels.CompletionHandler;
