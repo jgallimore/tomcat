@@ -105,6 +105,61 @@
   issues do not "pop up" wrt. others).
 -->
 <section name="Tomcat 10.0.28 (markt)" rtext="in development">
+  <subsection name="Catalina">
+    <changelog>
+      <fix>
+        <bug>66680</bug>: When serializing a session during the session
+        presistence process, do not log a warning that null Principals are not
+        serializable. Pull request <pr>638</pr> provided by tsryo. (markt)
+      </fix>
+      <fix>
+        Catch <code>NamingException</code> in <code>JNDIRealm#getPrincipal</code>.
+        It is used in Java up to 17 to signal closed connections. (fschumacher)
+      </fix>
+      <fix>
+        <bug>66822</bug>: Use the same naming format in log messages for
+        Connector instances as the associated ProtocolHandler instance. (markt)
+      </fix>
+    </changelog>
+  </subsection>
+  <subsection name="Coyote">
+    <changelog>
+      <fix>
+        Correct a regression introduced in 10.1.11 and use the correct
+        constant when constructing the default value for the
+        <code>certificateKeystoreFile</code> attribute of an
+        <code>SSLHostConfigCertificate</code> instance. (markt)
+      </fix>
+      <scode>
+        Refactor HTTP/2 implementation to reduce pinning when using virtual
+        threads. (markt)
+      </scode>
+      <fix>
+        Pass through ciphers referring to an OpenSSL profile, such as
+        <code>PROFILE=SYSTEM</code> instead of producing an error trying to
+        parse it. (remm)
+      </fix>
+      <fix>
+        <bug>66841</bug>: Ensure that <code>AsyncListener.onError()</code> is
+        called after an error during asynchronous processing with HTTP/2.
+        (markt)
+      </fix>
+      <fix>
+        <bug>66842</bug>: When using asynchronous I/O (the default), include
+        DATA frames when calculating the HTTP/2 overhead count to ensure that
+        connections are not prematurely terminated. (markt)
+      </fix>
+    </changelog>
+  </subsection>
+  <subsection name="WebSocket">
+    <changelog>
+      <fix>
+        <bug>66681</bug>: Fix a <code>NullPointerException</code> when flushing
+        batched messages with compression enabled using
+        <code>permessage-deflate</code>. (markt)
+      </fix>
+    </changelog>
+  </subsection>
   <subsection name="jdbc-pool">
     <changelog>
       <fix>
