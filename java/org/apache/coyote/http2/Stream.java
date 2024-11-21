@@ -100,6 +100,9 @@ class Stream extends AbstractNonZeroStream implements HeaderEmitter {
     private int pendingWindowUpdateForStream = 0;
 
 
+    private final Object recycledLock = new Object();
+    private volatile boolean recycled = false;
+
     Stream(Integer identifier, Http2UpgradeHandler handler) {
         this(identifier, handler, null);
     }
@@ -734,22 +737,19 @@ class Stream extends AbstractNonZeroStream implements HeaderEmitter {
         } else {
             handler.closeConnection(http2Exception);
         }
-        recycle();
+        replace();
     }
 
 
     /*
-     * This method is called recycle for consistency with the rest of the Tomcat
-     * code base. Currently, it calls the handler to replace this stream with an
+     * This method is called recycle for consistency with the rest of the Tomcat code base. Currently, it calls the
+     * handler to replace this stream with an implementation that uses less memory. It does not fully recycle the Stream
      * implementation that uses less memory. It does not fully recycle the
-     * Stream ready for re-use since Stream objects are not re-used. This is
+     * ready for re-use since Stream objects are not re-used. This is useful because Stream instances are retained for a
      * useful because Stream instances are retained for a period after the
-     * Stream closes.
+     * period after the Stream closes.
      */
-    final void recycle() {
-        if (log.isDebugEnabled()) {
-            log.debug(sm.getString("stream.recycle", getConnectionId(), getIdAsString()));
-        }
+    final void replace() {
         int remaining;
         // May be null if stream was closed before any DATA frames were processed.
         ByteBuffer inputByteBuffer = getInputByteBuffer();
@@ -759,6 +759,40 @@ class Stream extends AbstractNonZeroStream implements HeaderEmitter {
             remaining = inputByteBuffer.remaining();
         }
         handler.replaceStream(this, new RecycledStream(getConnectionId(), getIdentifier(), state, remaining));
+    }
+
+
+    /*
+     * This method is called recycle for consistency with the rest of the Tomcat code base. It does not recycle the
+     * Stream since Stream objects are not re-used. It does recycle the request and response objects and ensures that
+     * this is only done once.
+     *
+     * replace() should have been called before calling this method.
+     *
+     * It is important that this method is not called until any concurrent processing for the stream has completed. This
+     * is currently achieved by:
+     * - only the StreamProcessor calls this method
+     * - the Http2UpgradeHandler does not call this method
+     * - this method is called once the StreamProcessor considers the Stream closed
+     *
+     * In theory, the protection against duplicate calls is not required in this method (the code in StreamProcessor
+     * should be sufficient) but it is implemented as precaution along with the WARN level logging.
+     */
+    final void recycle() {
+        if (recycled) {
+            log.warn(sm.getString("stream.recycle.duplicate", getConnectionId(), getIdAsString()));
+            return;
+        }
+        synchronized (recycledLock) {
+            if (recycled) {
+                log.warn(sm.getString("stream.recycle.duplicate", getConnectionId(), getIdAsString()));
+                return;
+            }
+            recycled = true;
+        }
+        if (log.isTraceEnabled()) {
+            log.trace(sm.getString("stream.recycle.first", getConnectionId(), getIdAsString()));
+        }
     }
 
 

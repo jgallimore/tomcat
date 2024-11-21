@@ -105,6 +105,16 @@
   issues do not "pop up" wrt. others).
 -->
 <section name="Tomcat 10.0.28 (markt)" rtext="in development">
+  <subsection name="Coyote">
+    <changelog>
+      <fix>
+        Ensure the request and response are not recycled too soon for an HTTP/2
+        stream when a stream level error is detected during the processing of
+        incoming HTTP/2 frames. This could lead to incorrect processing times
+        appearing in the access log. (markt)
+      </fix>
+    </changelog>
+  </subsection>
   <subsection name="jdbc-pool">
     <changelog>
       <fix>

@@ -115,8 +115,8 @@ class StreamProcessor extends AbstractProcessor {
                             stream.close(se);
                         } else {
                             if (!stream.isActive()) {
-                                // stream.close() will call recycle so only need it here
-                                stream.recycle();
+                                // Close calls replace() so need the same call here
+                                stream.replace();
                             }
                         }
                     }
@@ -131,6 +131,7 @@ class StreamProcessor extends AbstractProcessor {
                     state = SocketState.CLOSED;
                 } finally {
                     if (state == SocketState.CLOSED) {
+                        stream.recycle();
                         recycle();
                     }
                 }
