@@ -2743,6 +2743,10 @@
         <bug>65111</bug>: Free direct memory buffers in the APR connector.
         (remm)
       </fix>
+      <fix>
+        The previous fix for incosistent resource metadata during concurrent
+        reads and writes was incomplete. (markt)
+      </fix>
     </changelog>
   </subsection>
 </section>
