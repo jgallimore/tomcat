@@ -125,6 +125,10 @@
         Align size tracking for multipart requests with FileUpload's use of
         <code>long</code>. (schultz)
       </fix>
+      <fix>
+        <bug>69527</bug>: Avoid rare cases where a cached resource could be set
+        with 0 content length, or could be evicted immediately. (remm)
+      </fix>
     </changelog>
   </subsection>
   <subsection name="Coyote">
