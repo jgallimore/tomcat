@@ -2094,6 +2094,7 @@
         <include name="RELEASE-NOTES"/>
         <include name="RUNNING.txt"/>
         <include name="README.md"/>
+        <include name="EAP-RELEASE-NOTES"/>
         <include name="BUILDING.txt" />
         <include name="CONTRIBUTING.md"/>
       </fileset>
@@ -2770,6 +2771,7 @@ asf.ldap.username=${release.asfusername}
         <include name="LICENSE"/>
         <include name="NOTICE"/>
         <include name="README.md"/>
+        <include name="EAP-RELEASE-NOTES"/>
         <include name="RELEASE-NOTES"/>
         <include name="RUNNING.txt"/>
         <include name="BUILDING.txt" />
@@ -2807,6 +2809,7 @@ asf.ldap.username=${release.asfusername}
         <include name="LICENSE"/>
         <include name="NOTICE"/>
         <include name="README.md"/>
+        <include name="EAP-RELEASE-NOTES"/>
         <include name="RELEASE-NOTES"/>
         <include name="RUNNING.txt"/>
         <include name="BUILDING.txt" />
@@ -2835,6 +2838,7 @@ asf.ldap.username=${release.asfusername}
         <include name="LICENSE"/>
         <include name="NOTICE"/>
         <include name="README.md"/>
+        <include name="EAP-RELEASE-NOTES"/>
         <include name="RELEASE-NOTES"/>
         <include name="RUNNING.txt"/>
         <include name="BUILDING.txt" />
@@ -2872,6 +2876,7 @@ asf.ldap.username=${release.asfusername}
       <zipfileset dir="${tomcat.dist}" prefix="${final.name}-deployer" includes="LICENSE" />
       <zipfileset dir="${tomcat.dist}" prefix="${final.name}-deployer" includes="NOTICE" />
       <zipfileset dir="${tomcat.dist}" prefix="${final.name}-deployer" includes="README.md" />
+
       <zipfileset dir="${tomcat.dist}" prefix="${final.name}-deployer" includes="RELEASE-NOTES" />
     </zip>
 
@@ -2905,6 +2910,7 @@ asf.ldap.username=${release.asfusername}
         <include name="LICENSE" />
         <include name="NOTICE" />
         <include name="README.md" />
+        <include name="EAP-RELEASE-NOTES"/>
         <include name="RELEASE-NOTES" />
         <include name="RUNNING.txt" />
         <include name="BUILDING.txt" />
@@ -2950,6 +2956,7 @@ asf.ldap.username=${release.asfusername}
         <include name="LICENSE" />
         <include name="NOTICE" />
         <include name="README.md" />
+        <include name="EAP-RELEASE-NOTES"/>
         <include name="RELEASE-NOTES" />
       </tarfileset>
       <tarfileset dir="${tomcat.deployer}" prefix="${final.name}-deployer">
@@ -2996,6 +3003,7 @@ asf.ldap.username=${release.asfusername}
         <include name="LICENSE" />
         <include name="NOTICE" />
         <include name="README.md" />
+        <include name="EAP-RELEASE-NOTES"/>
       </tarfileset>
       <tarfileset dir="${tomcat.dist}/webapps/docs" prefix="tomcat-${version.major.minor}-doc">
         <include name="**" />
