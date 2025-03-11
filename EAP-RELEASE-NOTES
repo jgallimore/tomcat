@@ -3,7 +3,7 @@
 # Changelog
 
 Apache Tomcat  10.0.28-TT.13
-- TTSA-p8zxw-9x4m8-8v5q8
+- TTSA-p8zxw-9x4m8-8v5q8 (CVE-2025-24813)
 
 Apache Tomcat  10.0.28-TT.12
 - CVE-2024-50379 - Tomcat RCE via DefaultServlet on non case-sensitive platforms.
