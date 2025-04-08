@@ -2,6 +2,9 @@
 
 # Changelog
 
+Apache Tomcat  10.0.28-TT.14
+- Fix for TTSA-hvxq9-pgm57-5j7j2
+
 Apache Tomcat  10.0.28-TT.13
 - TTSA-p8zxw-9x4m8-8v5q8 (CVE-2025-24813)
 
