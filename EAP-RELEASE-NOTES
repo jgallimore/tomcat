@@ -3,17 +3,17 @@
 # Changelog
 
 Apache Tomcat  10.0.28-TT.14
-- Fix for TTSA-hvxq9-pgm57-5j7j2
+- Fix for CVE-2025-31651 (TTSA-hvxq9-pgm57-5j7j2)
 
 Apache Tomcat  10.0.28-TT.13
-- TTSA-p8zxw-9x4m8-8v5q8 (CVE-2025-24813)
+- Fix for CVE-2025-24813 (TTSA-p8zxw-9x4m8-8v5q8)
 
 Apache Tomcat  10.0.28-TT.12
-- CVE-2024-50379 - Tomcat RCE via DefaultServlet on non case-sensitive platforms.
-- CVE-2024-54677 - Tomcat DoS in examples web application
+- Fix for CVE-2024-50379 - Tomcat RCE via DefaultServlet on non case-sensitive platforms.
+- Fix for CVE-2024-54677 - Tomcat DoS in examples web application
 
 Apache Tomcat  10.0.28-TT.11
-- CVE-2024-38286
+- Fix for CVE-2024-38286
 
 Apache Tomcat 10.0.28-TT.10
 - Fix for CVE-2024-38286 denial of service
