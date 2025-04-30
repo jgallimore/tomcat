@@ -2745,7 +2745,8 @@ You may need a custom build of makensis. Instructions for this may be found in B
   </target>
 
   <target name="-file-jsign"
-    depends="setup-jsign">
+    depends="setup-jsign"
+          unless="${skip.installer}">
     <fail unless="file" />
     <fail unless="dir" />
     <fail unless="savedir" />
@@ -3055,6 +3056,7 @@ Configured for ${release.asfusername} to release Tomcat ${version.major}.${versi
         <include name="LICENSE"/>
         <include name="NOTICE"/>
         <include name="README.md"/>
+        <include name="EAP-RELEASE-NOTES"/>
         <include name="RELEASE-NOTES"/>
         <include name="RUNNING.txt"/>
         <include name="BUILDING.txt" />
@@ -3092,6 +3094,7 @@ Configured for ${release.asfusername} to release Tomcat ${version.major}.${versi
         <include name="NOTICE"/>
         <include name="README.md"/>
         <include name="RELEASE-NOTES"/>
+        <include name="EAP-RELEASE-NOTES"/>
         <include name="RUNNING.txt"/>
         <include name="BUILDING.txt" />
         <include name="CONTRIBUTING.md"/>
@@ -3155,6 +3158,7 @@ Configured for ${release.asfusername} to release Tomcat ${version.major}.${versi
         <include name="NOTICE" />
         <include name="README.md" />
         <include name="RELEASE-NOTES" />
+        <include name="EAP-RELEASE-NOTES"/>
         <include name="RUNNING.txt" />
         <include name="BUILDING.txt" />
         <include name="CONTRIBUTING.md"/>

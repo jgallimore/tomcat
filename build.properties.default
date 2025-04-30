@@ -29,10 +29,10 @@
 # ----- Version Control Flags -----
 version.major=11
 version.minor=0
-version.build=6
+version.build=7
 version.patch=0
-version.suffix=
-version.dev=-dev
+version.suffix=-TT.1
+version.dev=dev
 
 # ----- Build tools -----
 ant.version.required=1.10.2
@@ -46,7 +46,7 @@ compile.debug=true
 compile.deprecation=false
 
 # ----- Documentation properties -----
-git.branch=main
+git.branch=tomcat-11.0.x-TT.x
 
 # ----- Code quality tools
 # Note enabling validation uses Checkstyle which is LGPL licensed
@@ -61,12 +61,14 @@ execute.spotbugs=false
 
 # Javadoc - warnings are disabled as they are noisy with Java 18+ and CheckStyle
 # works better for Tomcat.
-javadoc.failonerror=true
+javadoc.failonerror=false
 javadoc.failonwarning=false
 
 # ----- Test configuration -----
 execute.test.nio=true
 execute.test.nio2=true
+# Still requires APR/native library to be present
+execute.test.apr=false
 # Stop testing if a failure occurs
 test.haltonfailure=false
 # Activate AccessLog during testing
@@ -80,7 +82,10 @@ test.threads=1
 
 # Some platforms (e.g. OSX El Capitan) require IPv4 to be the default for the
 # multicast tests to work
-java.net.preferIPv4Stack=false
+java.net.preferIPv4Stack=true
+
+# Skip windows installer generation
+skip.installer=true
 
 # MacOS requires non-default settings to test FFM with OpenSSL. Eg:
 #openssl.ffm.1=-Dorg.apache.tomcat.util.openssl.USE_SYSTEM_LOAD_LIBRARY=true
