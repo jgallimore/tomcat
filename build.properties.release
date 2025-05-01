@@ -50,5 +50,6 @@ gpg.exec=C:/Program Files (x86)/GnuPG/bin/gpg.exe
 # File encoding:   UTF-8
 #
 # Release Manager: markt
+# Downgraded from ant 1.10.15 to 1.10.15: cesar
 release-java-version=23.0.2+7
 release-ant-version=1.10.14
