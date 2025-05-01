@@ -1,4 +1,21 @@
 # Changelog
 
 Apache Tomcat 11.0.7-TT.1
- - Initial EAP release.
+- Fixed binary versioning
+
+Apache Tomcat 11.0.6-TT.1
+ - Fix for CVE-2025-31651 (TTSA-hvxq9-pgm57-5j7j2)
+ - Fix for CVE-2025-31650 (TTSA-t6j76-mtwcv-5hjqj)
+
+Apache Tomcat 11.0.4-TT.1
+ - CVE-2025-24813 (TTSA-p8zxw-9x4m8-8v5q8)
+ - Bug 69576
+
+Apache Tomcat 11.0.2-TT.1
+ - CVE-2024-50379 - Tomcat RCE via DefaultServlet on non case-sensitive platforms.
+ - CVE-2024-54677 - Tomcat DoS in examples web application
+
+Apache Tomcat 11.0.1-TT.1
+ - CVE-2024-52318 XSS in generated JSPs
+ - CVE-2024-52316 Apache Tomcat: Authentication bypass when using Jakarta Authentication API (Since 11.0.0)
+ - CVE-2024-52317 Request and/or response mix-up (Since 11.0.0)
