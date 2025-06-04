@@ -117,6 +117,10 @@
         on the <code>SystemLogHandler</code> which caught incorrect exception.
         (lihan)
       </fix>
+      <fix>
+        Expand the path checks for Pre-Resources and Post-Resources mounted at a
+        path within the web application. (markt)
+      </fix>
     </changelog>
   </subsection>
   <subsection name="Coyote">
