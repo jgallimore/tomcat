@@ -23,6 +23,7 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 
 import org.apache.tomcat.util.http.fileupload.impl.FileUploadIOException;
+import org.apache.tomcat.util.http.fileupload.impl.SizeLimitExceededException;
 import org.apache.tomcat.util.http.fileupload.util.Closeable;
 import org.apache.tomcat.util.http.fileupload.util.Streams;
 
@@ -172,7 +173,10 @@ public class MultipartStream {
     /**
      * The maximum length of {@code header-part} that will be
      * processed (10 kilobytes = 10240 bytes.).
+     *
+     * @deprecated Unused. Replaced by {@link #getPartHeaderSizeMax()}.
      */
+    @Deprecated
     public static final int HEADER_PART_SIZE_MAX = 10240;
 
     /**
@@ -265,6 +269,11 @@ public class MultipartStream {
      */
     private final ProgressNotifier notifier;
 
+    /**
+     * The maximum permitted size of the headers provided with a single part in bytes.
+     */
+    private int partHeaderSizeMax = FileUploadBase.DEFAULT_PART_HEADER_SIZE_MAX;
+
     // ----------------------------------------------------------- Constructors
 
     /**
@@ -349,6 +358,17 @@ public class MultipartStream {
      */
     public String getHeaderEncoding() {
         return headerEncoding;
+    }
+
+    /**
+     * Obtain the per part size limit for headers.
+     *
+     * @return The maximum size of the headers for a single part in bytes.
+     *
+     * @since 1.6.0
+     */
+    public int getPartHeaderSizeMax() {
+        return partHeaderSizeMax;
     }
 
     /**
@@ -519,10 +539,11 @@ public class MultipartStream {
             } catch (final IOException e) {
                 throw new MalformedStreamException("Stream ended unexpectedly");
             }
-            if (++size > HEADER_PART_SIZE_MAX) {
-                throw new MalformedStreamException(String.format(
-                        "Header section has more than %s bytes (maybe it is not properly terminated)",
-                        Integer.valueOf(HEADER_PART_SIZE_MAX)));
+            size++;
+            if (getPartHeaderSizeMax() != -1 && size > getPartHeaderSizeMax()) {
+                throw new FileUploadIOException(new SizeLimitExceededException(
+                        String.format("Header section has more than %s bytes (maybe it is not properly terminated)", Integer.valueOf(getPartHeaderSizeMax())),
+                                size, getPartHeaderSizeMax()));
             }
             if (b == HEADER_SEPARATOR[i]) {
                 i++;
@@ -594,6 +615,17 @@ public class MultipartStream {
      */
     public int discardBodyData() throws MalformedStreamException, IOException {
         return readBodyData(null);
+    }
+
+    /**
+     * Sets the per part size limit for headers.
+     *
+     * @param partHeaderSizeMax The maximum size of the headers in bytes.
+     *
+     * @since 1.6.0
+     */
+    public void setPartHeaderSizeMax(final int partHeaderSizeMax) {
+        this.partHeaderSizeMax = partHeaderSizeMax;
     }
 
     /**
