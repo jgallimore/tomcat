@@ -202,6 +202,11 @@ public class RewriteValve extends ValveBase {
         if (containerLog == null) {
             containerLog = LogFactory.getLog(getContainer().getLogName() + ".rewrite");
         }
+        for (RewriteMap map : maps.values()) {
+            if (map instanceof Lifecycle) {
+                ((Lifecycle) map).stop();
+            }
+        }
         maps.clear();
         parse(new BufferedReader(new StringReader(configuration)));
     }
@@ -226,6 +231,7 @@ public class RewriteValve extends ValveBase {
     protected void parse(BufferedReader reader) throws LifecycleException {
         List<RewriteRule> rules = new ArrayList<>();
         List<RewriteCond> conditions = new ArrayList<>();
+        ArrayList<String> mapsConfiguration = new ArrayList<>();
         while (true) {
             try {
                 String line = reader.readLine();
@@ -271,12 +277,14 @@ public class RewriteValve extends ValveBase {
                 containerLog.error(sm.getString("rewriteValve.readError"), e);
             }
         }
-        this.rules = rules.toArray(new RewriteRule[0]);
+        this.mapsConfiguration = mapsConfiguration;
 
         // Finish parsing the rules
-        for (RewriteRule rule : this.rules) {
+        for (RewriteRule rule : rules) {
             rule.parse(maps);
         }
+
+        this.rules = rules.toArray(new RewriteRule[0]);
     }
 
     @Override
@@ -330,8 +338,6 @@ public class RewriteValve extends ValveBase {
              * The re-write rules need to be able to process URLs with literal '?' characters and add query strings
              * without the two becoming confused. The re-write rules also need to be able to insert literal '%'
              * characters without them being confused with %nn encoding.
-             *
-             * The re-write rules cannot insert path parameters.
              *
              * To meet these requirement, the URL is processed as follows.
              *
@@ -455,11 +461,13 @@ public class RewriteValve extends ValveBase {
                     if (context && urlStringEncoded.charAt(0) == '/' && !UriUtil.hasScheme(urlStringEncoded)) {
                         urlStringEncoded.insert(0, request.getContext().getEncodedPath());
                     }
+                    String redirectPath;
                     if (rule.isNoescape()) {
-                        response.sendRedirect(UDecoder.URLDecode(urlStringEncoded.toString(), uriCharset));
+                        redirectPath = UDecoder.URLDecode(urlStringEncoded.toString(), uriCharset);
                     } else {
-                        response.sendRedirect(urlStringEncoded.toString());
+                        redirectPath = urlStringEncoded.toString();
                     }
+                    response.sendRedirect(response.encodeRedirectURL(redirectPath));
                     response.setStatus(rule.getRedirectCode());
                     done = true;
                     break;
@@ -527,6 +535,8 @@ public class RewriteValve extends ValveBase {
                         queryStringRewriteEncoded = urlStringRewriteEncoded.substring(queryIndex + 1);
                         urlStringRewriteEncoded = urlStringRewriteEncoded.substring(0, queryIndex);
                     }
+                    // Parse path parameters from rewrite production and populate request path parameters
+                    urlStringRewriteEncoded = org.apache.catalina.util.RequestUtil.stripPathParams(urlStringRewriteEncoded, request);
                     // Save the current context path before re-writing starts
                     String contextPath = null;
                     if (context) {
@@ -569,6 +579,7 @@ public class RewriteValve extends ValveBase {
                         chunk.append(host.toString());
                     }
                     request.getMappingData().recycle();
+                    request.recycleSessionInfo();
                     // Reinvoke the whole request recursively
                     Connector connector = request.getConnector();
                     try {
@@ -870,4 +881,6 @@ public class RewriteValve extends ValveBase {
             return input;
         }
     }
+
+
 }

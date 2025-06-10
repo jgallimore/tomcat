@@ -147,7 +147,9 @@ public class Request implements HttpServletRequest {
     public Request(Connector connector, org.apache.coyote.Request coyoteRequest) {
         this.connector = connector;
         if (connector != null) {
-            this.maxParameterCount = connector.getMaxParameterCount();
+            maxParameterCount = connector.getMaxParameterCount();
+            maxPartCount = connector.getMaxPartCount();
+            maxPartHeaderSize = connector.getMaxPartHeaderSize();
         }
         this.coyoteRequest = coyoteRequest;
         inputBuffer = new InputBuffer(coyoteRequest);
@@ -420,13 +422,17 @@ public class Request implements HttpServletRequest {
      */
     private int maxParameterCount = -1;
 
+    private int maxPartCount = -1;
+
+    private int maxPartHeaderSize = -1;
+
     // --------------------------------------------------------- Public Methods
 
-    protected void addPathParameter(String name, String value) {
+    public void addPathParameter(String name, String value) {
         coyoteRequest.addPathParameter(name, value);
     }
 
-    protected String getPathParameter(String name) {
+    public String getPathParameter(String name) {
         return coyoteRequest.getPathParameter(name);
     }
 
@@ -451,8 +457,12 @@ public class Request implements HttpServletRequest {
         parametersParsed = false;
         if (connector != null) {
             maxParameterCount = connector.getMaxParameterCount();
+            maxPartCount = connector.getMaxPartCount();
+            maxPartHeaderSize = connector.getMaxPartHeaderSize();
         } else {
             maxParameterCount = -1;
+            maxPartCount = -1;
+            maxPartHeaderSize = -1;
         }
         if (parts != null) {
             for (Part part : parts) {
@@ -519,7 +529,7 @@ public class Request implements HttpServletRequest {
     }
 
 
-    protected void recycleSessionInfo() {
+    public void recycleSessionInfo() {
         if (session != null) {
             try {
                 session.endAccess();
@@ -842,14 +852,36 @@ public class Request implements HttpServletRequest {
         coyoteRequest.setServerPort(port);
     }
 
+
     /**
-     * Set the maximum number of request parameters (GET plus POST) for a single request
+     * Set the maximum number of request parameters (GET plus POST including multipart) for a single request.
      *
      * @param maxParameterCount The maximum number of request parameters
      */
     public void setMaxParameterCount(int maxParameterCount) {
         this.maxParameterCount = maxParameterCount;
     }
+
+
+    /**
+     * Set the maximum number of parts for a single multipart request.
+     *
+     * @param maxPartCount The maximum number of request parts
+     */
+    public void setMaxPartCount(int maxPartCount) {
+        this.maxPartCount = maxPartCount;
+    }
+
+
+    /**
+     * Set the maximum header size per part for a single multipart request.
+     *
+     * @param maxPartHeaderSize The maximum size of the headers for one part
+     */
+    public void setMaxPartHeaderSize(int maxPartHeaderSize) {
+        this.maxPartHeaderSize = maxPartHeaderSize;
+    }
+
 
     // ------------------------------------------------- ServletRequest Methods
 
@@ -2406,7 +2438,7 @@ public class Request implements HttpServletRequest {
     @Override
     public Collection<Part> getParts() throws IOException, IllegalStateException, ServletException {
 
-        parseParts();
+        parseParts(true);
 
         if (partsParseException != null) {
             if (partsParseException instanceof IOException) {
@@ -2422,7 +2454,7 @@ public class Request implements HttpServletRequest {
     }
 
 
-    private void parseParts() {
+    private void parseParts(boolean explicit) {
 
         // Return immediately if the parts have already been parsed
         if (parts != null || partsParseException != null) {
@@ -2437,7 +2469,11 @@ public class Request implements HttpServletRequest {
                 mce = new MultipartConfigElement(null, connector.getMaxPostSize(), connector.getMaxPostSize(),
                         connector.getMaxPostSize());
             } else {
-                partsParseException = new IllegalStateException(sm.getString("coyoteRequest.noMultipartConfig"));
+                if (explicit) {
+                    partsParseException = new IllegalStateException(sm.getString("coyoteRequest.noMultipartConfig"));
+                } else {
+                    parts = Collections.emptyList();
+                }
                 return;
             }
         }
@@ -2486,13 +2522,29 @@ public class Request implements HttpServletRequest {
         upload.setFileItemFactory(factory);
         upload.setFileSizeMax(mce.getMaxFileSize());
         upload.setSizeMax(mce.getMaxRequestSize());
-        if (maxParameterCount > -1) {
-            // There is a limit. The limit for parts needs to be reduced by
-            // the number of parameters we have already parsed.
-            // Must be under the limit else parsing parameters would have
-            // triggered an exception.
-            upload.setFileCountMax(maxParameterCount - parameters.size());
+        upload.setPartHeaderSizeMax(maxPartHeaderSize);
+        /*
+         * There are two independent limits on the number of parts.
+         *
+         * 1. The limit based on parameters. This is maxParameterCount less the number of parameters already processed.
+         *
+         * 2. The limit based on parts. This is maxPartCount.
+         *
+         * The lower of these two limits will be applied to this request.
+         *
+         * Note: Either of both limits may be set to -1 (unlimited).
+         */
+        int partLimit = maxParameterCount;
+        if (partLimit > -1) {
+            partLimit = partLimit - parameters.size();
         }
+        int maxPartCount = this.maxPartCount;
+        if (maxPartCount > -1) {
+            if (partLimit < 0 || partLimit > maxPartCount) {
+                partLimit = maxPartCount;
+            }
+        }
+        upload.setFileCountMax(partLimit);
 
         parts = new ArrayList<>();
         try {
@@ -2802,7 +2854,7 @@ public class Request implements HttpServletRequest {
         String mediaType = MediaType.parseMediaTypeOnly(getContentType());
 
         if ("multipart/form-data".equals(mediaType)) {
-            parseParts();
+            parseParts(false);
             if (partsParseException instanceof IllegalStateException) {
                 parametersParseException = (IllegalStateException) partsParseException;
             } else if (partsParseException != null) {

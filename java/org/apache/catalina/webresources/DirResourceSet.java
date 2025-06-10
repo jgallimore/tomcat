@@ -103,7 +103,7 @@ public class DirResourceSet extends AbstractFileResourceSet implements WebResour
         String webAppMount = getWebAppMount();
         WebResourceRoot root = getRoot();
         boolean readOnly = isReadOnly();
-        if (path.startsWith(webAppMount)) {
+        if (isPathMounted(path, webAppMount)) {
             /*
              * Lock the path for reading until the WebResource has been constructed. The lock prevents concurrent reads
              * and writes (e.g. HTTP GET and PUT / DELETE) for the same path causing corruption of the FileResource
@@ -137,7 +137,7 @@ public class DirResourceSet extends AbstractFileResourceSet implements WebResour
     public String[] list(String path) {
         checkPath(path);
         String webAppMount = getWebAppMount();
-        if (path.startsWith(webAppMount)) {
+        if (isPathMounted(path, webAppMount)) {
             File f = file(path.substring(webAppMount.length()), true);
             if (f == null) {
                 return EMPTY_STRING_ARRAY;
@@ -165,15 +165,16 @@ public class DirResourceSet extends AbstractFileResourceSet implements WebResour
         checkPath(path);
         String webAppMount = getWebAppMount();
         ResourceSet<String> result = new ResourceSet<>();
-        if (path.startsWith(webAppMount)) {
+        if (isPathMounted(path, webAppMount)) {
             File f = file(path.substring(webAppMount.length()), true);
             if (f != null) {
                 File[] list = f.listFiles();
                 if (list != null) {
+                    String fCanPath = null;
                     for (File entry : list) {
                         // f has already been validated so the following checks
                         // can be much simpler than those in file()
-                        if (!getRoot().getAllowLinking()) {
+                        if (!getAllowLinking()) {
                             // allow linking is disabled so need to check for
                             // symlinks
                             boolean symlink = true;
@@ -187,7 +188,9 @@ public class DirResourceSet extends AbstractFileResourceSet implements WebResour
                                 // that what is left does not contain a symlink.
                                 absPath = entry.getAbsolutePath().substring(f.getAbsolutePath().length());
                                 String entryCanPath = entry.getCanonicalPath();
-                                String fCanPath = f.getCanonicalPath();
+                                if (fCanPath == null) {
+                                    fCanPath = f.getCanonicalPath();
+                                }
                                 if (entryCanPath.length() >= fCanPath.length()) {
                                     canPath = entryCanPath.substring(fCanPath.length());
                                     if (absPath.equals(canPath)) {
@@ -239,7 +242,7 @@ public class DirResourceSet extends AbstractFileResourceSet implements WebResour
             return false;
         }
         String webAppMount = getWebAppMount();
-        if (path.startsWith(webAppMount)) {
+        if (isPathMounted(path, webAppMount)) {
             File f = file(path.substring(webAppMount.length()), false);
             if (f == null) {
                 return false;
@@ -269,7 +272,7 @@ public class DirResourceSet extends AbstractFileResourceSet implements WebResour
         }
 
         String webAppMount = getWebAppMount();
-        if (!path.startsWith(webAppMount)) {
+        if (!isPathMounted(path, webAppMount)) {
             return false;
         }
 
