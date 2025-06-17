@@ -1,7 +1,7 @@
 # Changelog
 
 Apache Tomcat 11.0.9-TT.1
-- CVE-2025-46701 - Security constraint bypass for CGI scripts
+- Fix CVE-2025-46701 CVE-2025-48988 CVE-2025-49125 CVE-2025-49124
 
 Apache Tomcat 11.0.7-TT.1
 - Fixed binary versioning
