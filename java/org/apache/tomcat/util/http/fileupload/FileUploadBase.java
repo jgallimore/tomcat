@@ -115,6 +115,14 @@ public abstract class FileUploadBase {
      */
     public static final String MULTIPART_MIXED = "multipart/mixed";
 
+    /**
+     * Default per part header size limit in bytes.
+     *
+     * @since FileUpload 1.6.0
+     */
+    public static final int DEFAULT_PART_HEADER_SIZE_MAX = 512;
+
+
     // ----------------------------------------------------------- Data members
 
     /**
@@ -134,6 +142,11 @@ public abstract class FileUploadBase {
      * request. A value of -1 indicates no maximum.
      */
     private long fileCountMax = -1;
+
+    /**
+     * The maximum permitted size of the headers provided with a single part in bytes.
+     */
+    private int partHeaderSizeMax = DEFAULT_PART_HEADER_SIZE_MAX;
 
     /**
      * The content encoding to use when reading part headers.
@@ -161,19 +174,7 @@ public abstract class FileUploadBase {
      */
     public abstract void setFileItemFactory(FileItemFactory factory);
 
-    /**
-     * Returns the maximum allowed size of a complete request, as opposed
-     * to {@link #getFileSizeMax()}.
-     *
-     * @return The maximum allowed size, in bytes. The default value of
-     *   -1 indicates, that there is no limit.
-     *
-     * @see #setSizeMax(long)
-     *
-     */
-    public long getSizeMax() {
-        return sizeMax;
-    }
+
 
     /**
      * Sets the maximum allowed size of a complete request, as opposed
@@ -220,14 +221,6 @@ public abstract class FileUploadBase {
         return fileCountMax;
     }
 
-    /**
-     * Sets the maximum number of files allowed per request/
-     *
-     * @param fileCountMax The new limit. {@code -1} means no limit.
-     */
-    public void setFileCountMax(long fileCountMax) {
-        this.fileCountMax = fileCountMax;
-    }
 
     /**
      * Retrieves the character encoding used when reading the headers of an
@@ -281,67 +274,8 @@ public abstract class FileUploadBase {
         }
     }
 
-    /**
-     * Processes an <a href="http://www.ietf.org/rfc/rfc1867.txt">RFC 1867</a>
-     * compliant {@code multipart/form-data} stream.
-     *
-     * @param ctx The context for the request to be parsed.
-     *
-     * @return A list of {@code FileItem} instances parsed from the
-     *         request, in the order that they were transmitted.
-     *
-     * @throws FileUploadException if there are problems reading/parsing
-     *                             the request or storing files.
-     */
-    public List<FileItem> parseRequest(final RequestContext ctx)
-            throws FileUploadException {
-        final List<FileItem> items = new ArrayList<>();
-        boolean successful = false;
-        try {
-            final FileItemIterator iter = getItemIterator(ctx);
-            final FileItemFactory fileItemFactory = Objects.requireNonNull(getFileItemFactory(),
-                    "No FileItemFactory has been set.");
-            final byte[] buffer = new byte[Streams.DEFAULT_BUFFER_SIZE];
-            while (iter.hasNext()) {
-                if (items.size() == fileCountMax) {
-                    // The next item will exceed the limit.
-                    throw new FileCountLimitExceededException(ATTACHMENT, getFileCountMax());
-                }
-                final FileItemStream item = iter.next();
-                // Don't use getName() here to prevent an InvalidFileNameException.
-                final String fileName = item.getName();
-                final FileItem fileItem = fileItemFactory.createItem(item.getFieldName(), item.getContentType(),
-                                                   item.isFormField(), fileName);
-                items.add(fileItem);
-                try {
-                    Streams.copy(item.openStream(), fileItem.getOutputStream(), true, buffer);
-                } catch (final FileUploadIOException e) {
-                    throw (FileUploadException) e.getCause();
-                } catch (final IOException e) {
-                    throw new IOFileUploadException(String.format("Processing of %s request failed. %s",
-                                                           MULTIPART_FORM_DATA, e.getMessage()), e);
-                }
-                final FileItemHeaders fih = item.getHeaders();
-                fileItem.setHeaders(fih);
-            }
-            successful = true;
-            return items;
-        } catch (final FileUploadException e) {
-            throw e;
-        } catch (final IOException e) {
-            throw new FileUploadException(e.getMessage(), e);
-        } finally {
-            if (!successful) {
-                for (final FileItem fileItem : items) {
-                    try {
-                        fileItem.delete();
-                    } catch (final Exception ignored) {
-                        // ignored TODO perhaps add to tracker delete failure list somehow?
-                    }
-                }
-            }
-        }
-    }
+
+
 
     /**
      * Processes an <a href="http://www.ietf.org/rfc/rfc1867.txt">RFC 1867</a>
@@ -518,6 +452,40 @@ public abstract class FileUploadBase {
     }
 
     /**
+     * Obtain the per part size limit for headers.
+     *
+     * @return The maximum size of the headers for a single part in bytes.
+     *
+     * @since FileUpload 1.6.0
+     */
+    public int getPartHeaderSizeMax() {
+        return partHeaderSizeMax;
+    }
+
+    /**
+     * Returns the progress listener.
+     *
+     * @return The progress listener, if any, or null.
+     */
+    public ProgressListener getProgressListener() {
+        return listener;
+    }
+
+    /**
+     * Returns the maximum allowed size of a complete request, as opposed
+     * to {@link #getFileSizeMax()}.
+     *
+     * @return The maximum allowed size, in bytes. The default value of
+     *   -1 indicates, that there is no limit.
+     *
+     * @see #setSizeMax(long)
+     *
+     */
+    public long getSizeMax() {
+        return sizeMax;
+    }
+
+    /**
      * Creates a new instance of {@link FileItemHeaders}.
      * @return The new instance.
      */
@@ -566,12 +534,86 @@ public abstract class FileUploadBase {
     }
 
     /**
-     * Returns the progress listener.
+     * Processes an <a href="http://www.ietf.org/rfc/rfc1867.txt">RFC 1867</a>
+     * compliant {@code multipart/form-data} stream.
      *
-     * @return The progress listener, if any, or null.
+     * @param ctx The context for the request to be parsed.
+     *
+     * @return A list of {@code FileItem} instances parsed from the
+     *         request, in the order that they were transmitted.
+     *
+     * @throws FileUploadException if there are problems reading/parsing
+     *                             the request or storing files.
      */
-    public ProgressListener getProgressListener() {
-        return listener;
+    public List<FileItem> parseRequest(final RequestContext ctx) throws FileUploadException {
+        final List<FileItem> items = new ArrayList<>();
+        boolean successful = false;
+        try {
+            final FileItemIterator iter = getItemIterator(ctx);
+            final FileItemFactory fileItemFactory = getFileItemFactory();
+            Objects.requireNonNull(fileItemFactory, "getFileItemFactory()");
+            final byte[] buffer = new byte[Streams.DEFAULT_BUFFER_SIZE];
+            while (iter.hasNext()) {
+                if (items.size() == fileCountMax) {
+                    // The next item will exceed the limit.
+                    throw new FileCountLimitExceededException(ATTACHMENT, getFileCountMax());
+                }
+                final FileItemStream item = iter.next();
+                // Don't use getName() here to prevent an InvalidFileNameException.
+                final String fileName = item.getName();
+                final FileItem fileItem = fileItemFactory.createItem(item.getFieldName(), item.getContentType(),
+                                                   item.isFormField(), fileName);
+                items.add(fileItem);
+                try {
+                    Streams.copy(item.openStream(), fileItem.getOutputStream(), true, buffer);
+                } catch (final FileUploadIOException e) {
+                    throw (FileUploadException) e.getCause();
+                } catch (final IOException e) {
+                    throw new IOFileUploadException(String.format("Processing of %s request failed. %s",
+                                                           MULTIPART_FORM_DATA, e.getMessage()), e);
+                }
+                final FileItemHeaders fih = item.getHeaders();
+                fileItem.setHeaders(fih);
+            }
+            successful = true;
+            return items;
+        } catch (final FileUploadException e) {
+            throw e;
+        } catch (final IOException e) {
+            throw new FileUploadException(e.getMessage(), e);
+        } finally {
+            if (!successful) {
+                for (final FileItem fileItem : items) {
+                    try {
+                        fileItem.delete();
+                    } catch (final Exception ignored) {
+                        // ignored TODO perhaps add to tracker delete failure list somehow?
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Sets the maximum number of files allowed per request.
+     *
+     * @param fileCountMax The new limit. {@code -1} means no limit.
+     */
+    public void setFileCountMax(final long fileCountMax) {
+        this.fileCountMax = fileCountMax;
+    }
+
+
+
+    /**
+     * Sets the per part size limit for headers.
+     *
+     * @param partHeaderSizeMax The maximum size of the headers in bytes.
+     *
+     * @since FileUpload 1.6.0
+     */
+    public void setPartHeaderSizeMax(final int partHeaderSizeMax) {
+        this.partHeaderSizeMax = partHeaderSizeMax;
     }
 
     /**

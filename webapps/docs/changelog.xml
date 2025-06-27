@@ -124,6 +124,17 @@
       <add>
         Add support for TLS 1.3 client initiated re-keying. (markt)
       </add>
+      <update>
+        Update the internal fork of Apache Commons FileUpload to f102840
+        (2023-06-05, 1.x-SNAPSHOT). (markt)
+      </update>
+      <add>Add commentMore actions
+        Provide finer grained control of multi-part request processing via two
+        new attributes on the <code>Connector</code> element.
+        <code>maxPartCount</code> limits the total number of parts in a
+        multi-part request and <code>maxPartHeaderSize</code> limits the size of
+        the headers provided with each part. (markt)
+      </add>
     </changelog>
   </subsection>
   <subsection name="Other">
