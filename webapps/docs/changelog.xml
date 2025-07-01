@@ -143,6 +143,10 @@
         multi-part request and <code>maxPartHeaderSize</code> limits the size of
         the headers provided with each part. (markt)
       </add>
+      <fix>
+        When setting the initial HTTP/2 connection limit, apply those limits
+        earlier. (markt)
+      </fix>
     </changelog>
   </subsection>
   <subsection name="Other">
