@@ -5,6 +5,8 @@
 Apache Tomcat  10.0.28-TT.16
 - Fix for CVE-2025-48976
 - Fix for CVE-2025-48988
+- Fix for CVE-2025-49124
+- Fix for CVE-2025-49125
 
 Apache Tomcat  10.0.28-TT.15
 - Fix for CVE-2025-46701
