@@ -2,6 +2,10 @@
 
 # Changelog
 
+Apache Tomcat  10.0.28-TT.17
+- Fix for CVE-2025-52520
+- Fix for CVE-2025-53506
+
 Apache Tomcat  10.0.28-TT.16
 - Fix for CVE-2025-48976
 - Fix for CVE-2025-48988
