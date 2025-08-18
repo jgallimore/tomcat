@@ -88,7 +88,7 @@ public class JdkLoggerFormatter extends Formatter {
         for( int i=0; i<8-buf.length(); i++ ) { buf.append(' '); }
 
         // Append the message
-        buf.append(message);
+        buf.append(LogUtil.escape(message));
 
         // Append stack trace if not null
         if(t != null) {
@@ -98,7 +98,7 @@ public class JdkLoggerFormatter extends Formatter {
             java.io.PrintWriter pw= new java.io.PrintWriter(sw);
             t.printStackTrace(pw);
             pw.close();
-            buf.append(sw.toString());
+            buf.append(LogUtil.escape(sw.toString()));
         }
 
         buf.append(System.lineSeparator());
