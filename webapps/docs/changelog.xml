@@ -256,6 +256,12 @@
         Make counting of active HTTP/2 streams per connection more robust.
         (markt)
       </fix>
+      <fix>
+        Update the HTTP/2 overhead documentation - particularly the code
+        comments - to reflect the deprecation of the <code>PRIORITY</code> frame
+        and clarify that a stream reset always triggers an overhead increase.
+        (markt)
+      </fix>
     </changelog>
   </subsection>
   <subsection name="Jasper">
