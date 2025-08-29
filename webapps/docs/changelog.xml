@@ -108,6 +108,10 @@
   <subsection name="Catalina">
     <changelog>
       <fix>
+        Fix handling of <code>QSA</code> and <code>QSD</code> flags in
+        <code>RewriteValve</code>. (markt)
+      </fix>
+      <fix>
         <bug>66680</bug>: When serializing a session during the session
         presistence process, do not log a warning that null Principals are not
         serializable. Pull request <pr>638</pr> provided by tsryo. (markt)
