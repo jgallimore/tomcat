@@ -2,6 +2,10 @@
 
 # Changelog
 
+Apache Tomcat  10.0.28-TT.19
+- Fix for CVE-2025-48989
+- Fix for CVE-2025-55668
+
 Apache Tomcat  10.0.28-TT.18
 - Avoid caching bogus 0 content length
 
