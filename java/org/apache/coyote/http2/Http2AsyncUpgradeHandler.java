@@ -132,6 +132,9 @@ public class Http2AsyncUpgradeHandler extends Http2UpgradeHandler {
             log.debug(sm.getString("upgradeHandler.rst.debug", connectionId,
                     Integer.toString(se.getStreamId()), se.getError(), se.getMessage()));
         }
+
+        increaseOverheadCount(FrameType.RST, getProtocol().getOverheadResetFactor());
+
         // Write a RST frame
         byte[] rstFrame = new byte[13];
         // Length
@@ -231,6 +234,9 @@ public class Http2AsyncUpgradeHandler extends Http2UpgradeHandler {
             log.debug(sm.getString("upgradeHandler.writeBody", connectionId, stream.getIdAsString(),
                     Integer.toString(len), Boolean.valueOf(finished)));
         }
+
+        reduceOverheadCount(FrameType.DATA);
+
         // Need to check this now since sending end of stream will change this.
         boolean writable = stream.canWrite();
         byte[] header = new byte[9];
