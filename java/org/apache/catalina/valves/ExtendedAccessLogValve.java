@@ -42,8 +42,8 @@ import org.apache.tomcat.util.ExceptionUtils;
 
 /**
  * An implementation of the W3c Extended Log File Format. See
- * <a href="http://www.w3.org/TR/WD-logfile.html">WD-logfile-960323</a>
- * for more information about the format. The following fields are supported:
+ * <a href="http://www.w3.org/TR/WD-logfile.html">WD-logfile-960323</a> for more information about the format. The
+ * following fields are supported:
  * <ul>
  * <li><code>c-dns</code>: Client hostname (or ip address if <code>enableLookups</code> for the connector is false)</li>
  * <li><code>c-ip</code>: Client ip address</li>
@@ -97,7 +97,7 @@ public class ExtendedAccessLogValve extends AccessLogValve {
      * toString() fails, '-' will be written to the buffer.
      *
      * @param value - The value to wrap
-     * @param buf the buffer to write to
+     * @param buf   the buffer to write to
      */
     static void wrap(Object value, CharArrayWriter buf) {
         String svalue;
@@ -108,8 +108,8 @@ public class ExtendedAccessLogValve extends AccessLogValve {
 
         try {
             svalue = value.toString();
-        } catch (Throwable e) {
-            ExceptionUtils.handleThrowable(e);
+        } catch (Throwable t) {
+            ExceptionUtils.handleThrowable(t);
             /* Log error */
             buf.append('-');
             return;
@@ -497,8 +497,8 @@ public class ExtendedAccessLogValve extends AccessLogValve {
                 log.trace("finished decoding with element size of: " + list.size());
             }
             return list.toArray(new AccessLogElement[0]);
-        } catch (IOException e) {
-            log.error(sm.getString("extendedAccessLogValve.patternParseError", pattern), e);
+        } catch (IOException ioe) {
+            log.error(sm.getString("extendedAccessLogValve.patternParseError", pattern), ioe);
             return null;
         }
     }
@@ -554,8 +554,8 @@ public class ExtendedAccessLogValve extends AccessLogValve {
                         String value;
                         try {
                             value = InetAddress.getLocalHost().getHostName();
-                        } catch (Throwable e) {
-                            ExceptionUtils.handleThrowable(e);
+                        } catch (Throwable t) {
+                            ExceptionUtils.handleThrowable(t);
                             value = "localhost";
                         }
                         buf.append(value);

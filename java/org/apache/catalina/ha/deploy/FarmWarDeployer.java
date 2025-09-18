@@ -237,8 +237,8 @@ public class FarmWarDeployer extends ClusterListener implements ClusterDeployer,
                         } else {
                             log.error(sm.getString("farmWarDeployer.servicingDeploy", contextName, name));
                         }
-                    } catch (Exception ex) {
-                        log.error(sm.getString("farmWarDeployer.fileMessageError"), ex);
+                    } catch (Exception e) {
+                        log.error(sm.getString("farmWarDeployer.fileMessageError"), e);
                     } finally {
                         removeFactory(fmsg);
                     }
@@ -262,12 +262,12 @@ public class FarmWarDeployer extends ClusterListener implements ClusterDeployer,
                     } else {
                         log.error(sm.getString("farmWarDeployer.servicingUndeploy", contextName));
                     }
-                } catch (Exception ex) {
-                    log.error(sm.getString("farmWarDeployer.undeployMessageError"), ex);
+                } catch (Exception e) {
+                    log.error(sm.getString("farmWarDeployer.undeployMessageError"), e);
                 }
             }
-        } catch (IOException x) {
-            log.error(sm.getString("farmWarDeployer.msgIoe"), x);
+        } catch (IOException ioe) {
+            log.error(sm.getString("farmWarDeployer.msgIoe"), ioe);
         }
     }
 
@@ -395,8 +395,8 @@ public class FarmWarDeployer extends ClusterListener implements ClusterDeployer,
                     log.error(sm.getString("farmWarDeployer.removeFailRemote", contextName));
                 }
 
-            } catch (Exception ex) {
-                log.error(sm.getString("farmWarDeployer.removeFailLocal", contextName), ex);
+            } catch (Exception e) {
+                log.error(sm.getString("farmWarDeployer.removeFailLocal", contextName), e);
             }
         }
 
@@ -428,8 +428,8 @@ public class FarmWarDeployer extends ClusterListener implements ClusterDeployer,
                 log.error(sm.getString("farmWarDeployer.servicingDeploy", cn.getName(), deployWar.getName()));
             }
             install(cn.getName(), deployWar);
-        } catch (Exception x) {
-            log.error(sm.getString("farmWarDeployer.modInstallFail"), x);
+        } catch (Exception e) {
+            log.error(sm.getString("farmWarDeployer.modInstallFail"), e);
         }
     }
 
@@ -441,8 +441,8 @@ public class FarmWarDeployer extends ClusterListener implements ClusterDeployer,
                 log.info(sm.getString("farmWarDeployer.removeLocal", cn.getName()));
             }
             remove(cn.getName(), true);
-        } catch (Exception x) {
-            log.error(sm.getString("farmWarDeployer.removeLocalFail"), x);
+        } catch (Exception e) {
+            log.error(sm.getString("farmWarDeployer.removeLocalFail"), e);
         }
     }
 
@@ -681,8 +681,8 @@ public class FarmWarDeployer extends ClusterListener implements ClusterDeployer,
                     return false;
                 }
             }
-        } catch (IOException e) {
-            log.error(sm.getString("farmWarDeployer.fileCopyFail", from, to), e);
+        } catch (IOException ioe) {
+            log.error(sm.getString("farmWarDeployer.fileCopyFail", from, to), ioe);
             return false;
         }
 
@@ -696,8 +696,8 @@ public class FarmWarDeployer extends ClusterListener implements ClusterDeployer,
                 }
                 os.write(buf, 0, len);
             }
-        } catch (IOException e) {
-            log.error(sm.getString("farmWarDeployer.fileCopyFail", from, to), e);
+        } catch (IOException ioe) {
+            log.error(sm.getString("farmWarDeployer.fileCopyFail", from, to), ioe);
             return false;
         }
         return true;
@@ -720,7 +720,8 @@ public class FarmWarDeployer extends ClusterListener implements ClusterDeployer,
         }
         try {
             dir = dir.getCanonicalFile();
-        } catch (IOException e) {// ignore
+        } catch (IOException ignore) {
+            // Ignore
         }
         return dir;
     }

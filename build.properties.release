@@ -24,7 +24,7 @@
 version.dev=
 
 # Ensure consistent timestamps for reproducible builds.
-ant.tstamp.now.iso=2025-04-01T14:40:40Z
+ant.tstamp.now.iso=2025-09-01T10:24:44Z
 
 # Enable insertion of detached signatures into the Windows installer.
 do.codesigning=true
@@ -41,7 +41,7 @@ gpg.exec=C:/Program Files (x86)/GnuPG/bin/gpg.exe
 #
 # Java Name:       OpenJDK 64-Bit Server VM
 # Java Vendor:     Eclipse Adoptium
-# Java Version:    23.0.2+7
+# Java Version:    24.0.2+12
 
 # The following is provided for information only. Builds will be repeatable
 # whether or not the build environment is consistent with this information.

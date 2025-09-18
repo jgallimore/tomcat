@@ -238,11 +238,11 @@ public class Registry implements RegistryMBean, MBeanRegistration {
                 }
                 getMBeanServer().invoke(current, operation, new Object[] {}, new String[] {});
 
-            } catch (Exception t) {
+            } catch (Exception e) {
                 if (failFirst) {
-                    throw t;
+                    throw e;
                 }
-                log.info(sm.getString("registry.initError"), t);
+                log.info(sm.getString("registry.initError"), e);
             }
         }
     }
@@ -338,8 +338,11 @@ public class Registry implements RegistryMBean, MBeanRegistration {
         MBeanInfo info;
         try {
             info = getMBeanServer().getMBeanInfo(oname);
-        } catch (Exception e) {
+        } catch (InstanceNotFoundException e) {
             log.info(sm.getString("registry.noMetadata", oname));
+            return null;
+        } catch (Exception e) {
+            log.warn(sm.getString("registry.noMetadata", oname), e);
             return null;
         }
 
@@ -366,8 +369,11 @@ public class Registry implements RegistryMBean, MBeanRegistration {
         MBeanInfo info;
         try {
             info = getMBeanServer().getMBeanInfo(oname);
-        } catch (Exception e) {
+        } catch (InstanceNotFoundException e) {
             log.info(sm.getString("registry.noMetadata", oname));
+            return null;
+        } catch (Exception e) {
+            log.warn(sm.getString("registry.noMetadata", oname), e);
             return null;
         }
         MBeanOperationInfo[] attInfo = info.getOperations();
@@ -635,9 +641,9 @@ public class Registry implements RegistryMBean, MBeanRegistration {
             }
 
             getMBeanServer().registerMBean(mbean, oname);
-        } catch (Exception ex) {
-            log.error(sm.getString("registry.registerError", oname), ex);
-            throw ex;
+        } catch (Exception e) {
+            log.error(sm.getString("registry.registerError", oname), e);
+            throw e;
         }
     }
 
@@ -672,7 +678,7 @@ public class Registry implements RegistryMBean, MBeanRegistration {
         searchedPaths.put(packageName, dURL);
         try {
             load("MbeansDescriptorsDigesterSource", dURL, null);
-        } catch (Exception ex) {
+        } catch (Exception e) {
             log.error(sm.getString("registry.loadError", dURL));
         }
     }

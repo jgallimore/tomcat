@@ -49,10 +49,9 @@ import org.apache.tomcat.InstanceManager;
 import org.apache.tomcat.Jar;
 
 /**
- * The Jasper JSP engine. The servlet container is responsible for providing a URLClassLoader for the web
- * application context Jasper is being used in. Jasper will try to get the Tomcat ServletContext attribute for its
- * ServletContext class loader, if that fails, it uses the parent class loader. In either case, it must be a
- * URLClassLoader.
+ * The Jasper JSP engine. The servlet container is responsible for providing a URLClassLoader for the web application
+ * context Jasper is being used in. Jasper will try to get the Tomcat ServletContext attribute for its ServletContext
+ * class loader, if that fails, it uses the parent class loader. In either case, it must be a URLClassLoader.
  *
  * @author Anil K. Vijendran
  * @author Harish Prabandham
@@ -402,11 +401,11 @@ public class JspServletWrapper {
                 throw handleJspException(ex);
             }
             throw ex;
-        } catch (Exception ex) {
+        } catch (Exception e) {
             if (options.getDevelopment()) {
-                throw handleJspException(ex);
+                throw handleJspException(e);
             }
-            throw new JasperException(ex);
+            throw new JasperException(e);
         }
 
         try {
@@ -454,16 +453,16 @@ public class JspServletWrapper {
                 throw handleJspException(ex);
             }
             throw ex;
-        } catch (IOException ex) {
+        } catch (IOException ioe) {
             if (options.getDevelopment()) {
-                throw new IOException(handleJspException(ex).getMessage(), ex);
+                throw new IOException(handleJspException(ioe).getMessage(), ioe);
             }
-            throw ex;
-        } catch (Exception ex) {
+            throw ioe;
+        } catch (Exception e) {
             if (options.getDevelopment()) {
-                throw handleJspException(ex);
+                throw handleJspException(e);
             }
-            throw new JasperException(ex);
+            throw new JasperException(e);
         }
     }
 
@@ -513,7 +512,8 @@ public class JspServletWrapper {
      * Attempts to construct a JasperException that contains helpful information about what went wrong. Uses the JSP
      * compiler system to translate the line number in the generated servlet that originated the exception to a line
      * number in the JSP. Then constructs an exception containing that information, and a snippet of the JSP to help
-     * debugging. Please see <a href="https://bz.apache.org/bugzilla/show_bug.cgi?id=37062">BZ 37062</a> for more details.
+     * debugging. Please see <a href="https://bz.apache.org/bugzilla/show_bug.cgi?id=37062">BZ 37062</a> for more
+     * details.
      * </p>
      *
      * @param ex the exception that was the cause of the problem.
@@ -563,8 +563,8 @@ public class JspServletWrapper {
                 throw new JasperException(ex);
             }
 
-            JavacErrorDetail detail = new JavacErrorDetail(jspFrame.getMethodName(), javaLineNumber,
-                    source.fileName(), source.lineNumber(), null, ctxt);
+            JavacErrorDetail detail = new JavacErrorDetail(jspFrame.getMethodName(), javaLineNumber, source.fileName(),
+                    source.lineNumber(), null, ctxt);
 
             if (options.getDisplaySourceFragment()) {
                 return new JasperException(
@@ -577,7 +577,7 @@ public class JspServletWrapper {
 
             return new JasperException(
                     Localizer.getMessage("jsp.exception", detail.getJspFileName(), "" + source.lineNumber()), ex);
-        } catch (Exception je) {
+        } catch (Exception e) {
             // If anything goes wrong, just revert to the original behaviour
             if (ex instanceof JasperException) {
                 return (JasperException) ex;

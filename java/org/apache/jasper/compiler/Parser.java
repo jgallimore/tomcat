@@ -245,8 +245,8 @@ class Parser implements TagConstants {
                 buf.append(ch);
                 reader.nextChar();
                 ch = (char) reader.peekChar();
-            } while (Character.isLetter(ch) || Character.isDigit(ch) ||
-                ch == '.' || ch == '_' || ch == '-' || ch == ':');
+            } while (Character.isLetter(ch) || Character.isDigit(ch) || ch == '.' || ch == '_' || ch == '-' ||
+                    ch == ':');
             return buf.toString();
         }
         return null;
@@ -328,8 +328,8 @@ class Parser implements TagConstants {
             }
         } catch (FileNotFoundException ex) {
             err.jspError(start, "jsp.error.file.not.found", file);
-        } catch (Exception ex) {
-            err.jspError(start, ex.getMessage());
+        } catch (Exception e) {
+            err.jspError(start, e.getMessage());
         }
     }
 

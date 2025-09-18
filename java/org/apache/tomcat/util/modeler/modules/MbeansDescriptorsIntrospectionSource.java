@@ -85,11 +85,10 @@ public class MbeansDescriptorsIntrospectionSource extends ModelerSource {
 
             registry.addManagedBean(managed);
 
-        } catch (Exception ex) {
-            log.error(sm.getString("modules.readDescriptorsError"), ex);
+        } catch (Exception e) {
+            log.error(sm.getString("modules.readDescriptorsError"), e);
         }
     }
-
 
     // ------------ Implementation for non-declared introspection classes
 
@@ -321,8 +320,8 @@ public class MbeansDescriptorsIntrospectionSource extends ModelerSource {
             mbean.setName(type);
 
             return mbean;
-        } catch (Exception ex) {
-            log.error(sm.getString("source.introspectionError", realClass.getName()), ex);
+        } catch (Exception e) {
+            log.error(sm.getString("source.introspectionError", realClass.getName()), e);
             return null;
         }
     }

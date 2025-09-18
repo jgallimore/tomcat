@@ -111,6 +111,7 @@ import org.apache.tomcat.util.http.ServerCookies;
 import org.apache.tomcat.util.http.fileupload.FileItem;
 import org.apache.tomcat.util.http.fileupload.FileUpload;
 import org.apache.tomcat.util.http.fileupload.disk.DiskFileItemFactory;
+import org.apache.tomcat.util.http.fileupload.impl.FileCountLimitExceededException;
 import org.apache.tomcat.util.http.fileupload.impl.InvalidContentTypeException;
 import org.apache.tomcat.util.http.fileupload.impl.SizeException;
 import org.apache.tomcat.util.http.fileupload.servlet.ServletRequestContext;
@@ -956,8 +957,8 @@ public class Request implements HttpServletRequest {
      * {@inheritDoc}
      * <p>
      * The attribute names returned will only be those for the attributes set via {@link #setAttribute(String, Object)}.
-     * Tomcat internal attributes will not be included even though they are accessible via {@link #getAttribute(String)}.
-     * The Tomcat internal attributes include:
+     * Tomcat internal attributes will not be included even though they are accessible via
+     * {@link #getAttribute(String)}. The Tomcat internal attributes include:
      * <ul>
      * <li>{@link Globals#DISPATCHER_TYPE_ATTR}</li>
      * <li>{@link Globals#DISPATCHER_REQUEST_PATH_ATTR}</li>
@@ -2209,8 +2210,8 @@ public class Request implements HttpServletRequest {
             Session session = null;
             try {
                 session = manager.findSession(requestedSessionId);
-            } catch (IOException e) {
-                // Can't find the session
+            } catch (IOException ignore) {
+                // Error looking up session. Treat it as not found.
             }
 
             if ((session == null) || !session.isValid()) {
@@ -2222,8 +2223,8 @@ public class Request implements HttpServletRequest {
                             if (ctxt.getManager().findSession(requestedSessionId) != null) {
                                 return true;
                             }
-                        } catch (IOException e) {
-                            // Ignore
+                        } catch (IOException ignore) {
+                            // Error looking up session. Treat it as not found.
                         }
                     }
                 }
@@ -2441,6 +2442,11 @@ public class Request implements HttpServletRequest {
         parseParts(true);
 
         if (partsParseException != null) {
+            Context context = getContext();
+            if (context != null && context.getLogger().isDebugEnabled()) {
+                context.getLogger()
+                        .debug(sm.getString("coyoteRequest.partsParseException", partsParseException.getMessage()));
+            }
             if (partsParseException instanceof IOException) {
                 throw (IOException) partsParseException;
             } else if (partsParseException instanceof IllegalStateException) {
@@ -2478,6 +2484,26 @@ public class Request implements HttpServletRequest {
             }
         }
 
+        /*
+         * When the request body is multipart/form-data, both the parts and the query string count towards
+         * maxParameterCount. If parseParts() is called before getParameterXXX() then the parts will be parsed before
+         * the query string. Otherwise, the query string will be parsed first.
+         *
+         * maxParameterCount must be respected regardless of which is parsed first.
+         *
+         * maxParameterCount is reset from the Connector at the start of every request.
+         *
+         * If parts are parsed first, non-file parts will be added to the parameter map and any files will reduce
+         * maxParameterCount by 1 so that when the query string is parsed the difference between the size of the
+         * parameter map and maxParameterCount will be the original maxParameterCount less the number of parts. i.e. the
+         * maxParameterCount applied to the query string will be the original maxParameterCount less the number of
+         * parts.
+         *
+         * If the query string is parsed first, all parameters will be added to the parameter map and, ignoring
+         * maxPartCount, the part limit will be set to the original maxParameterCount less the size of the parameter
+         * map. i.e. the maxParameterCount applied to the parts will be the original maxParameterCount less the number
+         * of query parameters.
+         */
         Parameters parameters = coyoteRequest.getParameters();
         parameters.setLimit(maxParameterCount);
 
@@ -2550,23 +2576,23 @@ public class Request implements HttpServletRequest {
         try {
             List<FileItem> items = upload.parseRequest(new ServletRequestContext(this));
             int maxPostSize = getConnector().getMaxPostSize();
-            int postSize = 0;
+            long postSize = 0;
             Charset charset = getCharset();
             for (FileItem item : items) {
                 ApplicationPart part = new ApplicationPart(item, location);
-                parts.add(part);
                 if (part.getSubmittedFileName() == null) {
                     String name = part.getName();
                     if (maxPostSize >= 0) {
                         // Have to calculate equivalent size. Not completely
                         // accurate but close enough.
-                        postSize += name.getBytes(charset).length;
+                        // Name
+                        postSize = Math.addExact(postSize, name.getBytes(charset).length);
                         // Equals sign
-                        postSize++;
+                        postSize = Math.addExact(postSize, 1);
                         // Value length
-                        postSize += (int) part.getSize();
+                        postSize = Math.addExact(postSize, part.getSize());
                         // Value separator
-                        postSize++;
+                        postSize = Math.addExact(postSize, 1);
                         if (postSize > maxPostSize) {
                             throw new IllegalStateException(sm.getString("coyoteRequest.maxPostSizeExceeded"));
                         }
@@ -2578,15 +2604,19 @@ public class Request implements HttpServletRequest {
                         // Not possible
                     }
                     parameters.addParameter(name, value);
+                } else {
+                    // Adjust the limit to account for a file part which is not added to the parameter map.
+                    maxParameterCount--;
                 }
+                parts.add(part);
             }
         } catch (InvalidContentTypeException e) {
             partsParseException = new ServletException(e);
-        } catch (SizeException e) {
+        } catch (SizeException | FileCountLimitExceededException e) {
             checkSwallowInput();
             partsParseException = new InvalidParameterException(e, HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE);
-        } catch (IOException e) {
-            partsParseException = e;
+        } catch (IOException ioe) {
+            partsParseException = ioe;
         } catch (IllegalStateException e) {
             checkSwallowInput();
             partsParseException = e;
@@ -2631,11 +2661,11 @@ public class Request implements HttpServletRequest {
         if (requestedSessionId != null) {
             try {
                 session = manager.findSession(requestedSessionId);
-            } catch (IOException e) {
+            } catch (IOException ioe) {
                 if (log.isDebugEnabled()) {
-                    log.debug(sm.getString("request.session.failed", requestedSessionId, e.getMessage()), e);
+                    log.debug(sm.getString("request.session.failed", requestedSessionId, ioe.getMessage()), ioe);
                 } else {
-                    log.info(sm.getString("request.session.failed", requestedSessionId, e.getMessage()));
+                    log.info(sm.getString("request.session.failed", requestedSessionId, ioe.getMessage()));
                 }
                 session = null;
             }
@@ -2684,9 +2714,8 @@ public class Request implements HttpServletRequest {
                                 found = true;
                                 break;
                             }
-                        } catch (IOException e) {
-                            // Ignore. Problems with this manager will be
-                            // handled elsewhere.
+                        } catch (IOException ignore) {
+                            // Error looking up session. Treat it as not found.
                         }
                     }
                 }
@@ -2796,7 +2825,7 @@ public class Request implements HttpServletRequest {
                 scookie.getValue().getByteChunk().setCharset(getCookieProcessor().getCharset());
                 cookie.setValue(unescape(scookie.getValue().toString()));
                 cookies[idx++] = cookie;
-            } catch (IllegalArgumentException e) {
+            } catch (IllegalArgumentException ignore) {
                 // Ignore bad cookie
             }
         }
@@ -2815,6 +2844,11 @@ public class Request implements HttpServletRequest {
         doParseParameters();
 
         if (parametersParseException != null) {
+            Context context = getContext();
+            if (context != null && context.getLogger().isDebugEnabled()) {
+                context.getLogger().debug(
+                        sm.getString("coyoteRequest.parametersParseException", parametersParseException.getMessage()));
+            }
             throw parametersParseException;
         }
     }
@@ -2826,11 +2860,27 @@ public class Request implements HttpServletRequest {
         }
         parametersParsed = true;
 
+        /*
+         * When the request body is multipart/form-data, both the parts and the query string count towards
+         * maxParameterCount. If parseParts() is called before getParameterXXX() then the parts will be parsed before
+         * the query string. Otherwise, the query string will be parsed first.
+         *
+         * maxParameterCount must be respected regardless of which is parsed first.
+         *
+         * maxParameterCount is reset from the Connector at the start of every request.
+         *
+         * If parts are parsed first, non-file parts will be added to the parameter map and any files will reduce
+         * maxParameterCount by 1 so that when the query string is parsed the difference between the size of the
+         * parameter map and maxParameterCount will be the original maxParameterCount less the number of parts. i.e. the
+         * maxParameterCount applied to the query string will be the original maxParameterCount less the number of
+         * parts.
+         *
+         * If the query string is parsed first, all parameters will be added to the parameter map and, ignoring
+         * maxPartCount, the part limit will be set to the original maxParameterCount less the size of the parameter
+         * map. i.e. the maxParameterCount applied to the parts will be the original maxParameterCount less the number
+         * of query parameters.
+         */
         Parameters parameters = coyoteRequest.getParameters();
-
-        if (parts != null && maxParameterCount > 0) {
-            maxParameterCount -= parts.size();
-        }
         parameters.setLimit(maxParameterCount);
 
         // getCharacterEncoding() may have been overridden to search for
@@ -2897,19 +2947,19 @@ public class Request implements HttpServletRequest {
             }
             try {
                 readPostBodyFully(formData, len);
-            } catch (IOException e) {
+            } catch (IOException ioe) {
                 Context context = getContext();
                 if (context != null && context.getLogger().isDebugEnabled()) {
-                    context.getLogger().debug(sm.getString("coyoteRequest.parseParameters"), e);
+                    context.getLogger().debug(sm.getString("coyoteRequest.parseParameters"), ioe);
                 }
-                if (e instanceof ClientAbortException) {
+                if (ioe instanceof ClientAbortException) {
                     // Client has disconnected. Close immediately.
                     response.getCoyoteResponse().action(ActionCode.CLOSE_NOW, null);
                 }
-                if (e instanceof BadRequestException) {
-                    parametersParseException = new InvalidParameterException(e);
+                if (ioe instanceof BadRequestException) {
+                    parametersParseException = new InvalidParameterException(ioe);
                 } else {
-                    parametersParseException = new InvalidParameterException(new BadRequestException(e));
+                    parametersParseException = new InvalidParameterException(new BadRequestException(ioe));
                 }
                 return;
             }
@@ -2920,19 +2970,19 @@ public class Request implements HttpServletRequest {
                 formData = readChunkedPostBody();
             } catch (IllegalStateException ise) {
                 parametersParseException = ise;
-            } catch (IOException e) {
+            } catch (IOException ioe) {
                 Context context = getContext();
                 if (context != null && context.getLogger().isDebugEnabled()) {
-                    context.getLogger().debug(sm.getString("coyoteRequest.parseParameters"), e);
+                    context.getLogger().debug(sm.getString("coyoteRequest.parseParameters"), ioe);
                 }
-                if (e instanceof ClientAbortException) {
+                if (ioe instanceof ClientAbortException) {
                     // Client has disconnected. Close immediately.
                     response.getCoyoteResponse().action(ActionCode.CLOSE_NOW, null);
                 }
-                if (e instanceof BadRequestException) {
-                    parametersParseException = new InvalidParameterException(e);
+                if (ioe instanceof BadRequestException) {
+                    parametersParseException = new InvalidParameterException(ioe);
                 } else {
-                    parametersParseException = new InvalidParameterException(new BadRequestException(e));
+                    parametersParseException = new InvalidParameterException(new BadRequestException(ioe));
                 }
             }
             if (formData != null) {
@@ -3042,7 +3092,7 @@ public class Request implements HttpServletRequest {
         List<AcceptLanguage> acceptLanguages;
         try {
             acceptLanguages = AcceptLanguage.parse(new StringReader(value));
-        } catch (IOException e) {
+        } catch (IOException ioe) {
             // Mal-formed headers are ignore. Do the same in the unlikely event
             // of an IOException.
             return;

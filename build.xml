@@ -446,15 +446,18 @@
 
   <patternset id="files.tomcat-util">
     <include name="org/apache/tomcat/util/buf/**" />
-    <include name="org/apache/tomcat/util/codec/**" />
     <include name="org/apache/tomcat/util/collections/**" />
     <include name="org/apache/tomcat/util/compat/**" />
+    <include name="org/apache/tomcat/util/concurrent/**" />
     <include name="org/apache/tomcat/util/file/**" />
+    <include name="org/apache/tomcat/util/json/**" />
     <include name="org/apache/tomcat/util/res/**" />
     <include name="org/apache/tomcat/util/security/**" />
     <include name="org/apache/tomcat/util/threads/**" />
-    <include name="org/apache/tomcat/util/json/**" />
     <include name="org/apache/tomcat/util/*" />
+    <!-- Strictly, none of these exclusions need to be listed here. They are -->
+    <!-- listed to make it easier to check that no package has been          -->
+    <!-- overlooked.                                                         -->
     <exclude name="org/apache/tomcat/util/bcel" />
     <exclude name="org/apache/tomcat/util/descriptor" />
     <exclude name="org/apache/tomcat/util/digester" />
@@ -464,6 +467,7 @@
     <exclude name="org/apache/tomcat/util/net" />
     <exclude name="org/apache/tomcat/util/openssl"/>
     <exclude name="org/apache/tomcat/util/scan" />
+    <exclude name="org/apache/tomcat/util/xreflection" />
   </patternset>
 
   <patternset id="files.tomcat-util-scan">
@@ -538,9 +542,9 @@
     <include name="org/apache/tomcat/util/*" />
     <include name="org/apache/tomcat/util/bcel/**" />
     <include name="org/apache/tomcat/util/buf/**" />
-    <include name="org/apache/tomcat/util/codec/**" />
     <include name="org/apache/tomcat/util/collections/**" />
     <include name="org/apache/tomcat/util/compat/**" />
+    <include name="org/apache/tomcat/util/concurrent/**" />
     <include name="org/apache/tomcat/util/descriptor/**" />
     <include name="org/apache/tomcat/util/file/**" />
     <include name="org/apache/tomcat/util/http/**" />
@@ -2472,19 +2476,22 @@
         <include name="org/apache/tomcat/util/digester/**" />
         <exclude name="org/apache/tomcat/util/bcel" />
         <exclude name="org/apache/tomcat/util/buf" />
-        <exclude name="org/apache/tomcat/util/codec" />
         <exclude name="org/apache/tomcat/util/collections" />
         <exclude name="org/apache/tomcat/util/compat" />
+        <exclude name="org/apache/tomcat/util/concurrent" />
         <exclude name="org/apache/tomcat/util/descriptor" />
         <exclude name="org/apache/tomcat/util/file" />
         <exclude name="org/apache/tomcat/util/http" />
+        <exclude name="org/apache/tomcat/util/json" />
         <exclude name="org/apache/tomcat/util/log" />
         <exclude name="org/apache/tomcat/util/modeler" />
         <exclude name="org/apache/tomcat/util/net" />
+        <exclude name="org/apache/tomcat/util/openssl" />
         <exclude name="org/apache/tomcat/util/res" />
         <exclude name="org/apache/tomcat/util/scan" />
         <exclude name="org/apache/tomcat/util/security" />
         <exclude name="org/apache/tomcat/util/threads" />
+        <exclude name="org/apache/tomcat/util/xreflection" />
         <exclude name="**/package.html" />
         <exclude name="**/LocalStrings_*" />
       </fileset>

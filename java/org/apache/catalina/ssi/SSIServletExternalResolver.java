@@ -301,8 +301,8 @@ public class SSIServletExternalResolver implements SSIExternalResolver {
             } else if (nameParts[1].equals("PROTOCOL")) {
                 retVal = req.getProtocol();
             } else if (nameParts[1].equals("SOFTWARE")) {
-                retVal = context.getServerInfo() + ' ' + System.getProperty("java.vm.name") +
-                        '/' + System.getProperty("java.vm.version") + ' ' + System.getProperty("os.name");
+                retVal = context.getServerInfo() + ' ' + System.getProperty("java.vm.name") + '/' +
+                        System.getProperty("java.vm.version") + ' ' + System.getProperty("os.name");
             }
         } else if (name.equalsIgnoreCase("UNIQUE_ID")) {
             retVal = req.getRequestedSessionId();
@@ -440,7 +440,7 @@ public class SSIServletExternalResolver implements SSIExternalResolver {
         try {
             URLConnection urlConnection = getURLConnection(path, virtual);
             lastModified = urlConnection.getLastModified();
-        } catch (IOException e) {
+        } catch (IOException ignore) {
             // Ignore this. It will always fail for non-file based includes
         }
         return lastModified;
@@ -453,7 +453,7 @@ public class SSIServletExternalResolver implements SSIExternalResolver {
         try {
             URLConnection urlConnection = getURLConnection(path, virtual);
             fileSize = urlConnection.getContentLengthLong();
-        } catch (IOException e) {
+        } catch (IOException ignore) {
             // Ignore this. It will always fail for non-file based includes
         }
         return fileSize;

@@ -34,6 +34,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -86,8 +87,8 @@ public class WsWebSocketContainer implements WebSocketContainer, BackgroundProce
     private final Log log = LogFactory.getLog(WsWebSocketContainer.class); // must not be static
     // Server side uses the endpoint path as the key
     // Client side uses the client endpoint instance
-    private final Map<Object, Set<WsSession>> endpointSessionMap = new HashMap<>();
-    private final Map<WsSession, WsSession> sessions = new ConcurrentHashMap<>();
+    private final Map<Object,Set<WsSession>> endpointSessionMap = new HashMap<>();
+    private final Map<WsSession,WsSession> sessions = new ConcurrentHashMap<>();
     private final Object endPointSessionMapLock = new Object();
 
     private long defaultAsyncTimeout = -1;
@@ -150,8 +151,7 @@ public class WsWebSocketContainer implements WebSocketContainer, BackgroundProce
         if (configurator != null) {
             builder.configurator(configurator);
         }
-        return builder.decoders(Arrays.asList(annotation.decoders()))
-                .encoders(Arrays.asList(annotation.encoders()))
+        return builder.decoders(Arrays.asList(annotation.decoders())).encoders(Arrays.asList(annotation.encoders()))
                 .preferredSubprotocols(Arrays.asList(annotation.subprotocols())).build();
     }
 
@@ -232,7 +232,7 @@ public class WsWebSocketContainer implements WebSocketContainer, BackgroundProce
             }
         }
 
-        Map<String, Object> userProperties = clientEndpointConfiguration.getUserProperties();
+        Map<String,Object> userProperties = clientEndpointConfiguration.getUserProperties();
 
         // If sa is null, no proxy is configured so need to create sa
         if (sa == null) {
@@ -243,7 +243,7 @@ public class WsWebSocketContainer implements WebSocketContainer, BackgroundProce
         }
 
         // Create the initial HTTP request to open the WebSocket connection
-        Map<String, List<String>> reqHeaders = createRequestHeaders(host, port, secure, clientEndpointConfiguration);
+        Map<String,List<String>> reqHeaders = createRequestHeaders(host, port, secure, clientEndpointConfiguration);
         clientEndpointConfiguration.getConfigurator().beforeRequest(reqHeaders);
         if (Constants.DEFAULT_ORIGIN_HEADER_VALUE != null && !reqHeaders.containsKey(Constants.ORIGIN_HEADER_NAME)) {
             List<String> originValues = new ArrayList<>(1);
@@ -334,8 +334,8 @@ public class WsWebSocketContainer implements WebSocketContainer, BackgroundProce
 
             if (httpResponse.status != 101) {
                 if (isRedirectStatus(httpResponse.status)) {
-                    List<String> locationHeader = httpResponse.handshakeResponse().getHeaders()
-                            .get(Constants.LOCATION_HEADER_NAME);
+                    List<String> locationHeader =
+                            httpResponse.handshakeResponse().getHeaders().get(Constants.LOCATION_HEADER_NAME);
 
                     if (locationHeader == null || locationHeader.isEmpty() || locationHeader.get(0) == null ||
                             locationHeader.get(0).isEmpty()) {
@@ -415,8 +415,8 @@ public class WsWebSocketContainer implements WebSocketContainer, BackgroundProce
             }
 
             success = true;
-        } catch (ExecutionException | InterruptedException | SSLException | EOFException | TimeoutException
-                | URISyntaxException | AuthenticationException e) {
+        } catch (ExecutionException | InterruptedException | SSLException | EOFException | TimeoutException |
+                URISyntaxException | AuthenticationException e) {
             throw new DeploymentException(sm.getString("wsWebSocketContainer.httpRequestFailed", path), e);
         } finally {
             if (!success) {
@@ -462,7 +462,7 @@ public class WsWebSocketContainer implements WebSocketContainer, BackgroundProce
 
     private Session processAuthenticationChallenge(ClientEndpointHolder clientEndpointHolder,
             ClientEndpointConfig clientEndpointConfiguration, URI path, Set<URI> redirectSet,
-            Map<String, Object> userProperties, ByteBuffer request, HttpResponse httpResponse,
+            Map<String,Object> userProperties, ByteBuffer request, HttpResponse httpResponse,
             AuthenticationType authenticationType) throws DeploymentException, AuthenticationException {
 
         if (userProperties.get(authenticationType.getAuthorizationHeaderName()) != null) {
@@ -470,8 +470,8 @@ public class WsWebSocketContainer implements WebSocketContainer, BackgroundProce
                     Integer.valueOf(httpResponse.status), authenticationType.getAuthorizationHeaderName()));
         }
 
-        List<String> authenticateHeaders = httpResponse.handshakeResponse().getHeaders()
-                .get(authenticationType.getAuthenticateHeaderName());
+        List<String> authenticateHeaders =
+                httpResponse.handshakeResponse().getHeaders().get(authenticationType.getAuthenticateHeaderName());
 
         if (authenticateHeaders == null || authenticateHeaders.isEmpty() || authenticateHeaders.get(0) == null ||
                 authenticateHeaders.get(0).isEmpty()) {
@@ -612,13 +612,13 @@ public class WsWebSocketContainer implements WebSocketContainer, BackgroundProce
         return result;
     }
 
-    private static Map<String, List<String>> createRequestHeaders(String host, int port, boolean secure,
+    private static Map<String,List<String>> createRequestHeaders(String host, int port, boolean secure,
             ClientEndpointConfig clientEndpointConfiguration) {
 
-        Map<String, List<String>> headers = new HashMap<>();
+        Map<String,List<String>> headers = new HashMap<>();
         List<Extension> extensions = clientEndpointConfiguration.getExtensions();
         List<String> subProtocols = clientEndpointConfiguration.getPreferredSubprotocols();
-        Map<String, Object> userProperties = clientEndpointConfiguration.getUserProperties();
+        Map<String,Object> userProperties = clientEndpointConfiguration.getUserProperties();
 
         if (userProperties.get(Constants.AUTHORIZATION_HEADER_NAME) != null) {
             List<String> authValues = new ArrayList<>(1);
@@ -663,8 +663,20 @@ public class WsWebSocketContainer implements WebSocketContainer, BackgroundProce
         }
 
         // WebSocket extensions
-        if (extensions != null && !extensions.isEmpty()) {
-            headers.put(Constants.WS_EXTENSIONS_HEADER_NAME, generateExtensionHeaders(extensions));
+        if (extensions != null) {
+            // Filter the requested extensions to remove any that are not supported by the client container.
+            Set<String> installed = TransformationFactory.getInstance().getInstalledExtensionNames();
+            List<Extension> availableExtensions = new ArrayList<>(extensions);
+            Iterator<Extension> availableExtensionsIter = availableExtensions.iterator();
+            while (availableExtensionsIter.hasNext()) {
+                Extension e = availableExtensionsIter.next();
+                if (!installed.contains(e.getName())) {
+                    availableExtensionsIter.remove();
+                }
+            }
+            if (!availableExtensions.isEmpty()) {
+                headers.put(Constants.WS_EXTENSIONS_HEADER_NAME, generateExtensionHeaders(availableExtensions));
+            }
         }
 
         return headers;
@@ -698,7 +710,7 @@ public class WsWebSocketContainer implements WebSocketContainer, BackgroundProce
     }
 
 
-    private static ByteBuffer createRequest(URI uri, Map<String, List<String>> reqHeaders) {
+    private static ByteBuffer createRequest(URI uri, Map<String,List<String>> reqHeaders) {
         ByteBuffer result = ByteBuffer.allocate(4 * 1024);
 
         // Request line
@@ -717,7 +729,7 @@ public class WsWebSocketContainer implements WebSocketContainer, BackgroundProce
         result.put(HTTP_VERSION_BYTES);
 
         // Headers
-        for (Entry<String, List<String>> entry : reqHeaders.entrySet()) {
+        for (Entry<String,List<String>> entry : reqHeaders.entrySet()) {
             result = addHeader(result, entry.getKey(), entry.getValue());
         }
 
@@ -772,7 +784,7 @@ public class WsWebSocketContainer implements WebSocketContainer, BackgroundProce
     private HttpResponse processResponse(ByteBuffer response, AsyncChannelWrapper channel, long timeout)
             throws InterruptedException, ExecutionException, DeploymentException, EOFException, TimeoutException {
 
-        Map<String, List<String>> headers = new CaseInsensitiveKeyMap<>();
+        Map<String,List<String>> headers = new CaseInsensitiveKeyMap<>();
 
         int status = 0;
         boolean readStatus = false;
@@ -838,7 +850,7 @@ public class WsWebSocketContainer implements WebSocketContainer, BackgroundProce
     }
 
 
-    private void parseHeaders(String line, Map<String, List<String>> headers) {
+    private void parseHeaders(String line, Map<String,List<String>> headers) {
         // Treat headers as single values by default.
 
         int index = line.indexOf(':');
@@ -946,7 +958,7 @@ public class WsWebSocketContainer implements WebSocketContainer, BackgroundProce
      */
     @Override
     public Set<Extension> getInstalledExtensions() {
-        return Collections.emptySet();
+        return TransformationFactory.getInstance().getInstalledExtensions();
     }
 
 
@@ -979,7 +991,9 @@ public class WsWebSocketContainer implements WebSocketContainer, BackgroundProce
             try {
                 session.close(cr);
             } catch (IOException ioe) {
-                log.debug(sm.getString("wsWebSocketContainer.sessionCloseFail", session.getId()), ioe);
+                if (log.isDebugEnabled()) {
+                    log.debug(sm.getString("wsWebSocketContainer.sessionCloseFail", session.getId()), ioe);
+                }
             }
         }
 

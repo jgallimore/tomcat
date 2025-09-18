@@ -128,20 +128,19 @@ public class AjpProcessor extends AbstractProcessor {
         System.arraycopy(pongMessage.getBuffer(), 0, pongMessageArray, 0, pongMessage.getLen());
 
         // Build Map of Java Servlet to Jakarta Servlet attribute names
-        jakartaAttributeMapping = Map.of(
-            "jakarta.servlet.request.secure_protocol", "jakarta.servlet.request.secure_protocol",
-            "jakarta.servlet.request.cipher_suite", "jakarta.servlet.request.cipher_suite",
-            "jakarta.servlet.request.key_size", "jakarta.servlet.request.key_size",
-            "jakarta.servlet.request.ssl_session", "jakarta.servlet.request.ssl_session",
-            "jakarta.servlet.request.X509Certificate", "jakarta.servlet.request.X509Certificate",
-            "javax.servlet.request.cipher_suite", "jakarta.servlet.request.cipher_suite",
-            "javax.servlet.request.key_size", "jakarta.servlet.request.key_size",
-            "javax.servlet.request.ssl_session", "jakarta.servlet.request.ssl_session",
-            "javax.servlet.request.X509Certificate", "jakarta.servlet.request.X509Certificate");
+        jakartaAttributeMapping =
+                Map.of("jakarta.servlet.request.secure_protocol", "jakarta.servlet.request.secure_protocol",
+                        "jakarta.servlet.request.cipher_suite", "jakarta.servlet.request.cipher_suite",
+                        "jakarta.servlet.request.key_size", "jakarta.servlet.request.key_size",
+                        "jakarta.servlet.request.ssl_session", "jakarta.servlet.request.ssl_session",
+                        "jakarta.servlet.request.X509Certificate", "jakarta.servlet.request.X509Certificate",
+                        "javax.servlet.request.cipher_suite", "jakarta.servlet.request.cipher_suite",
+                        "javax.servlet.request.key_size", "jakarta.servlet.request.key_size",
+                        "javax.servlet.request.ssl_session", "jakarta.servlet.request.ssl_session",
+                        "javax.servlet.request.X509Certificate", "jakarta.servlet.request.X509Certificate");
 
-        iisTlsAttributes = Set.of(
-            "CERT_ISSUER", "CERT_SUBJECT", "CERT_COOKIE", "HTTPS_SERVER_SUBJECT", "CERT_FLAGS", "HTTPS_SECRETKEYSIZE",
-            "CERT_SERIALNUMBER", "HTTPS_SERVER_ISSUER", "HTTPS_KEYSIZE");
+        iisTlsAttributes = Set.of("CERT_ISSUER", "CERT_SUBJECT", "CERT_COOKIE", "HTTPS_SERVER_SUBJECT", "CERT_FLAGS",
+                "HTTPS_SECRETKEYSIZE", "CERT_SERIALNUMBER", "HTTPS_SERVER_ISSUER", "HTTPS_KEYSIZE");
     }
 
 
@@ -363,11 +362,11 @@ public class AjpProcessor extends AbstractProcessor {
                     try {
                         socketWrapper.write(true, pongMessageArray, 0, pongMessageArray.length);
                         socketWrapper.flush(true);
-                    } catch (IOException e) {
+                    } catch (IOException ioe) {
                         if (getLog().isDebugEnabled()) {
-                            getLog().debug(sm.getString("ajpprocessor.pongFail"), e);
+                            getLog().debug(sm.getString("ajpprocessor.pongFail"), ioe);
                         }
-                        setErrorState(ErrorState.CLOSE_CONNECTION_NOW, e);
+                        setErrorState(ErrorState.CLOSE_CONNECTION_NOW, ioe);
                     }
                     recycle();
                     continue;
@@ -381,12 +380,14 @@ public class AjpProcessor extends AbstractProcessor {
                     break;
                 }
                 request.setStartTimeNanos(System.nanoTime());
-            } catch (IOException e) {
-                setErrorState(ErrorState.CLOSE_CONNECTION_NOW, e);
+            } catch (IOException ioe) {
+                setErrorState(ErrorState.CLOSE_CONNECTION_NOW, ioe);
                 break;
             } catch (Throwable t) {
                 ExceptionUtils.handleThrowable(t);
-                getLog().debug(sm.getString("ajpprocessor.header.error"), t);
+                if (getLog().isDebugEnabled()) {
+                    getLog().debug(sm.getString("ajpprocessor.header.error"), t);
+                }
                 // 400 - Bad Request
                 response.setStatus(400);
                 setErrorState(ErrorState.CLOSE_CLEAN, t);
@@ -399,7 +400,9 @@ public class AjpProcessor extends AbstractProcessor {
                     prepareRequest();
                 } catch (Throwable t) {
                     ExceptionUtils.handleThrowable(t);
-                    getLog().debug(sm.getString("ajpprocessor.request.prepare"), t);
+                    if (getLog().isDebugEnabled()) {
+                        getLog().debug(sm.getString("ajpprocessor.request.prepare"), t);
+                    }
                     // 500 - Internal Server Error
                     response.setStatus(500);
                     setErrorState(ErrorState.CLOSE_CLEAN, t);
@@ -871,9 +874,9 @@ public class AjpProcessor extends AbstractProcessor {
     protected void populateHost() {
         try {
             request.serverName().duplicate(request.localName());
-        } catch (IOException e) {
+        } catch (IOException ioe) {
             response.setStatus(400);
-            setErrorState(ErrorState.CLOSE_CLEAN, e);
+            setErrorState(ErrorState.CLOSE_CLEAN, ioe);
         }
     }
 
@@ -1034,10 +1037,12 @@ public class AjpProcessor extends AbstractProcessor {
         if (empty && doRead) {
             try {
                 refillReadBuffer(false);
-            } catch (IOException timeout) {
-                // Not ideal. This will indicate that data is available
-                // which should trigger a read which in turn will trigger
-                // another IOException and that one can be thrown.
+            } catch (IOException ioe) {
+                /*
+                 * Probably a timeout. This approach isn't ideal but it works. Returning 1 will indicate that data is
+                 * available which should trigger a read which in turn will trigger another IOException and that one can
+                 * be thrown.
+                 */
                 return 1;
             }
         }
@@ -1279,8 +1284,8 @@ public class AjpProcessor extends AbstractProcessor {
                 // Validate and write response headers
                 try {
                     prepareResponse();
-                } catch (IOException e) {
-                    setErrorState(ErrorState.CLOSE_CONNECTION_NOW, e);
+                } catch (IOException ioe) {
+                    setErrorState(ErrorState.CLOSE_CONNECTION_NOW, ioe);
                 }
             }
 

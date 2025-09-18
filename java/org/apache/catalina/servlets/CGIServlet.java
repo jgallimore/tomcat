@@ -431,7 +431,9 @@ public final class CGIServlet extends HttpServlet {
                 }
             }
         } catch (IllegalStateException ise) {
-            log.trace("Request Parameters: [Invalid]");
+            if (log.isTraceEnabled()) {
+                log.trace("Request Parameters: [Invalid]", ise);
+            }
         }
         log.trace("Protocol: [" + req.getProtocol() + "]");
         log.trace("Remote Address: [" + req.getRemoteAddr() + "]");
@@ -1519,9 +1521,9 @@ public final class CGIServlet extends HttpServlet {
                     }
                 } // replacement for Process.waitFor()
 
-            } catch (IOException e) {
-                log.warn(sm.getString("cgiServlet.runFail"), e);
-                throw e;
+            } catch (IOException ioe) {
+                log.warn(sm.getString("cgiServlet.runFail"), ioe);
+                throw ioe;
             } finally {
                 // Close the header reader
                 if (cgiHeaderReader != null) {
@@ -1544,7 +1546,7 @@ public final class CGIServlet extends HttpServlet {
                     try {
                         errReaderThread.join(stderrTimeout);
                     } catch (InterruptedException e) {
-                        log.warn(sm.getString("cgiServlet.runReaderInterrupt"));
+                        log.warn(sm.getString("cgiServlet.runReaderInterrupt"), e);
                     }
                 }
                 if (proc != null) {
@@ -1622,13 +1624,13 @@ public final class CGIServlet extends HttpServlet {
                     log.warn(sm.getString("cgiServlet.runStdErr", line));
                     lineCount++;
                 }
-            } catch (IOException e) {
-                log.warn(sm.getString("cgiServlet.runStdErrFail"), e);
+            } catch (IOException ioe) {
+                log.warn(sm.getString("cgiServlet.runStdErrFail"), ioe);
             } finally {
                 try {
                     rdr.close();
-                } catch (IOException e) {
-                    log.warn(sm.getString("cgiServlet.runStdErrFail"), e);
+                } catch (IOException ioe) {
+                    log.warn(sm.getString("cgiServlet.runStdErrFail"), ioe);
                 }
             }
             if (lineCount > 0) {

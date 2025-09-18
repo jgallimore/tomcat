@@ -669,8 +669,8 @@ class Stream extends AbstractNonZeroStream implements HeaderEmitter {
 
 
     @Override
-    final void receivedData(int payloadSize) throws Http2Exception {
-        contentLengthReceived += payloadSize;
+    final void receivedData(int dataLength) throws Http2Exception {
+        contentLengthReceived += dataLength;
         long contentLengthHeader = coyoteRequest.getContentLengthLong();
         if (contentLengthHeader > -1 && contentLengthReceived > contentLengthHeader) {
             throw new ConnectionException(
@@ -1063,7 +1063,7 @@ class Stream extends AbstractNonZeroStream implements HeaderEmitter {
                 // Only want to return false if the window size is zero AND we are
                 // already waiting for an allocation.
                 return (getWindowSize() <= 0 || !allocationManager.isWaitingForStream()) &&
-                    (handler.getWindowSize() <= 0 || !allocationManager.isWaitingForConnection()) && !dataLeft;
+                        (handler.getWindowSize() <= 0 || !allocationManager.isWaitingForConnection()) && !dataLeft;
             } finally {
                 writeLock.unlock();
             }

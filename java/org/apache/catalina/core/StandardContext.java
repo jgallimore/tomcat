@@ -2445,8 +2445,8 @@ public class StandardContext extends ContainerBase implements Context, Notificat
         if (!workDir.isAbsolute()) {
             try {
                 workDir = new File(getCatalinaBase().getCanonicalFile(), getWorkDir());
-            } catch (IOException e) {
-                log.warn(sm.getString("standardContext.workPath", getName()), e);
+            } catch (IOException ioe) {
+                log.warn(sm.getString("standardContext.workPath", getName()), ioe);
             }
         }
         return workDir.getAbsolutePath();
@@ -4369,8 +4369,8 @@ public class StandardContext extends ContainerBase implements Context, Notificat
                     if ((getCluster() != null) && distributable) {
                         try {
                             contextManager = getCluster().createManager(getName());
-                        } catch (Exception ex) {
-                            log.error(sm.getString("standardContext.cluster.managerError"), ex);
+                        } catch (Exception e) {
+                            log.error(sm.getString("standardContext.cluster.managerError"), e);
                             ok = false;
                         }
                     } else {
@@ -4727,8 +4727,8 @@ public class StandardContext extends ContainerBase implements Context, Notificat
         // This object will no longer be visible or used.
         try {
             resetContext();
-        } catch (Exception ex) {
-            log.error(sm.getString("standardContext.resetContextFail", getName()), ex);
+        } catch (Exception e) {
+            log.error(sm.getString("standardContext.resetContextFail", getName()), e);
         }
 
         // reset the instance manager
@@ -4976,9 +4976,8 @@ public class StandardContext extends ContainerBase implements Context, Notificat
         if (isUseNaming()) {
             try {
                 ContextBindings.bindThread(this, getNamingToken());
-            } catch (NamingException e) {
-                // Silent catch, as this is a normal case during the early
-                // startup stages
+            } catch (NamingException ignore) {
+                // Silent catch, as this is a normal case during the early startup stages
             }
         }
 
@@ -5307,8 +5306,9 @@ public class StandardContext extends ContainerBase implements Context, Notificat
             try {
                 catalinaHomePath = getCatalinaBase().getCanonicalPath();
                 dir = new File(catalinaHomePath, workDir);
-            } catch (IOException e) {
-                log.warn(sm.getString("standardContext.workCreateException", workDir, getCatalinaBase(), getName()), e);
+            } catch (IOException ioe) {
+                log.warn(sm.getString("standardContext.workCreateException", workDir, getCatalinaBase(), getName()),
+                        ioe);
             }
         }
         if (!dir.mkdirs() && !dir.isDirectory()) {

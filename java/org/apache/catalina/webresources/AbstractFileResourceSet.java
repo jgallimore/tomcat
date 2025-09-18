@@ -106,7 +106,7 @@ public abstract class AbstractFileResourceSet extends AbstractResourceSet {
         String canPath = null;
         try {
             canPath = file.getCanonicalPath();
-        } catch (IOException e) {
+        } catch (IOException ignore) {
             // Ignore
         }
         if (canPath == null || !canPath.startsWith(canonicalBase)) {
@@ -164,12 +164,11 @@ public abstract class AbstractFileResourceSet extends AbstractResourceSet {
 
 
     protected void logIgnoredSymlink(String contextPath, String absPath, String canPath) {
-        String msg = sm.getString("abstractFileResourceSet.canonicalfileCheckFailed", contextPath, absPath, canPath);
         // Log issues with configuration files at a higher level
         if (absPath.startsWith("/META-INF/") || absPath.startsWith("/WEB-INF/")) {
-            log.error(msg);
+            log.error(sm.getString("abstractFileResourceSet.canonicalfileCheckFailed", contextPath, absPath, canPath));
         } else {
-            log.warn(msg);
+            log.warn(sm.getString("abstractFileResourceSet.canonicalfileCheckFailed", contextPath, absPath, canPath));
         }
     }
 
@@ -242,8 +241,8 @@ public abstract class AbstractFileResourceSet extends AbstractResourceSet {
 
         try {
             this.canonicalBase = fileBase.getCanonicalPath();
-        } catch (IOException e) {
-            throw new IllegalArgumentException(e);
+        } catch (IOException ioe) {
+            throw new IllegalArgumentException(ioe);
         }
 
         // Need to handle mapping of the file system root as a special case

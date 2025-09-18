@@ -41,10 +41,9 @@ import org.apache.tomcat.PeriodicEventListener;
 import org.apache.tomcat.util.security.Escape;
 
 /**
- * The Jasper JSP engine. The servlet container is responsible for providing a URLClassLoader for the web
- * application context Jasper is being used in. Jasper will try to get the Tomcat ServletContext attribute for its
- * ServletContext class loader, if that fails, it uses the parent class loader. In either case, it must be a
- * URLClassLoader.
+ * The Jasper JSP engine. The servlet container is responsible for providing a URLClassLoader for the web application
+ * context Jasper is being used in. Jasper will try to get the Tomcat ServletContext attribute for its ServletContext
+ * class loader, if that fails, it uses the parent class loader. In either case, it must be a URLClassLoader.
  *
  * @author Anil K. Vijendran
  * @author Harish Prabandham
@@ -88,8 +87,8 @@ public class JspServlet extends HttpServlet implements PeriodicEventListener {
                 Constructor<?> ctor = engineOptionsClass.getConstructor(ctorSig);
                 Object[] args = { config, context };
                 options = (Options) ctor.newInstance(args);
-            } catch (Throwable e) {
-                Throwable throwable = ExceptionUtils.unwrapInvocationTargetException(e);
+            } catch (Throwable t) {
+                Throwable throwable = ExceptionUtils.unwrapInvocationTargetException(t);
                 ExceptionUtils.handleThrowable(throwable);
                 // Need to localize this.
                 log.warn(Localizer.getMessage("jsp.warning.engineOptionsClass", engineOptionsName), throwable);
@@ -112,8 +111,8 @@ public class JspServlet extends HttpServlet implements PeriodicEventListener {
             }
             try {
                 serviceJspFile(null, null, jspFile, true);
-            } catch (IOException e) {
-                throw new ServletException(Localizer.getMessage("jsp.error.precompilation", jspFile), e);
+            } catch (IOException ioe) {
+                throw new ServletException(Localizer.getMessage("jsp.error.precompilation", jspFile), ioe);
             }
         }
 
@@ -288,9 +287,9 @@ public class JspServlet extends HttpServlet implements PeriodicEventListener {
             serviceJspFile(request, response, jspUri, precompile);
         } catch (RuntimeException | IOException | ServletException e) {
             throw e;
-        } catch (Throwable e) {
-            ExceptionUtils.handleThrowable(e);
-            throw new ServletException(e);
+        } catch (Throwable t) {
+            ExceptionUtils.handleThrowable(t);
+            throw new ServletException(t);
         }
 
     }

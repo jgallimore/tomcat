@@ -365,7 +365,7 @@ public class OpenSSLContext implements org.apache.tomcat.util.net.SSLContext {
                     }
                 }
             } catch (Exception e) {
-                log.error(sm.getString("opensslconf.checkFailed", e.getLocalizedMessage()));
+                log.error(sm.getString("opensslconf.checkFailed", e.getLocalizedMessage()), e);
                 return false;
             }
             if (!ok) {
@@ -414,7 +414,7 @@ public class OpenSSLContext implements org.apache.tomcat.util.net.SSLContext {
                     }
                 }
             } catch (Exception e) {
-                log.error(sm.getString("opensslconf.applyFailed"));
+                log.error(sm.getString("opensslconf.applyFailed"), e);
                 return false;
             }
             if (rc <= 0) {
@@ -769,7 +769,9 @@ public class OpenSSLContext implements org.apache.tomcat.util.net.SSLContext {
                     x509TrustManager.checkClientTrusted(peerCerts, authMethod);
                     return 1;
                 } catch (Exception e) {
-                    log.debug(sm.getString("openssl.certificateVerificationFailed"), e);
+                    if (log.isDebugEnabled()) {
+                        log.debug(sm.getString("openssl.certificateVerificationFailed"), e);
+                    }
                 }
             }
             return 0;
@@ -891,8 +893,8 @@ public class OpenSSLContext implements org.apache.tomcat.util.net.SSLContext {
                         new InputStreamReader(ConfigFileLoader.getSource().getResource(keyPassFile).getInputStream(),
                                 StandardCharsets.UTF_8))) {
                     keyPassToUse = reader.readLine();
-                } catch (IOException e) {
-                    log.error(sm.getString("openssl.errorLoadingPassword", keyPassFile), e);
+                } catch (IOException ioe) {
+                    log.error(sm.getString("openssl.errorLoadingPassword", keyPassFile), ioe);
                     return false;
                 }
             } else {
@@ -902,8 +904,8 @@ public class OpenSSLContext implements org.apache.tomcat.util.net.SSLContext {
             byte[] certificateFileBytes;
             try (Resource resource = ConfigFileLoader.getSource().getResource(certificate.getCertificateFile())) {
                 certificateFileBytes = resource.getInputStream().readAllBytes();
-            } catch (IOException e) {
-                log.error(sm.getString("openssl.errorLoadingCertificate", certificate.getCertificateFile()), e);
+            } catch (IOException ioe) {
+                log.error(sm.getString("openssl.errorLoadingCertificate", certificate.getCertificateFile()), ioe);
                 return false;
             }
             MemorySegment certificateFileBytesNative =
@@ -957,8 +959,8 @@ public class OpenSSLContext implements org.apache.tomcat.util.net.SSLContext {
                     byte[] certificateKeyFileBytes;
                     try (Resource resource = ConfigFileLoader.getSource().getResource(certificateKeyFileName)) {
                         certificateKeyFileBytes = resource.getInputStream().readAllBytes();
-                    } catch (IOException e) {
-                        log.error(sm.getString("openssl.errorLoadingCertificate", certificateKeyFileName), e);
+                    } catch (IOException ioe) {
+                        log.error(sm.getString("openssl.errorLoadingCertificate", certificateKeyFileName), ioe);
                         return false;
                     }
                     MemorySegment certificateKeyFileBytesNative =
@@ -1096,10 +1098,10 @@ public class OpenSSLContext implements org.apache.tomcat.util.net.SSLContext {
                     try (Resource resource =
                             ConfigFileLoader.getSource().getResource(certificate.getCertificateChainFile())) {
                         certificateChainBytes = resource.getInputStream().readAllBytes();
-                    } catch (IOException e) {
+                    } catch (IOException ioe) {
                         log.error(
                                 sm.getString("openssl.errorLoadingCertificate", certificate.getCertificateChainFile()),
-                                e);
+                                ioe);
                         return false;
                     }
                     MemorySegment certificateChainBytesNative =
