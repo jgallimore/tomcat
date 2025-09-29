@@ -108,6 +108,10 @@
   <subsection name="Catalina">
     <changelog>
       <fix>
+        Be proactive in cleaning up temporary files after a failed multi-part
+        upload rather than waiting for GC to do it. (markt)
+      </fix>    
+      <fix>
         Fix handling of <code>QSA</code> and <code>QSD</code> flags in
         <code>RewriteValve</code>. (markt)
       </fix>
