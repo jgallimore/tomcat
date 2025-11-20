@@ -35,6 +35,7 @@
     <meta name="copyright" content="copyright 2005-2025 the Apache Software Foundation"/>
     <meta name="robots" content="noindex,nofollow,noarchive"/>
     <title>Configured certificate chains per Connector</title>
+    <link href="<%=request.getContextPath()%>/images/favicon.ico" rel="icon" type="image/x-icon" />
 </head>
 <body>
 <h1>Configured certificate chains per Connector</h1>
@@ -68,7 +69,7 @@
     </tbody>
 </table>
 
-<form method="get" action="<%=request.getContextPath()%>/html">
+<form method="GET" action="<%=request.getContextPath()%>/html">
   <p style="text-align: center;">
     <input type="submit" value="Return to main page" />
   </p>

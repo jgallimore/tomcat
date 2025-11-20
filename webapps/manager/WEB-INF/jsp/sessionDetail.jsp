@@ -50,10 +50,10 @@
     <meta http-equiv="cache-control" content="no-cache,must-revalidate"/><!-- HTTP 1.1 -->
     <meta http-equiv="expires" content="0"/><!-- 0 is an invalid value and should be treated as 'now' -->
     <meta http-equiv="content-language" content="en"/>
-    <meta name="author" content="Cedrik LIME"/>
     <meta name="copyright" content="copyright 2005-2025 the Apache Software Foundation"/>
     <meta name="robots" content="noindex,nofollow,noarchive"/>
     <title>Sessions Administration: details for <%= currentSessionId %></title>
+    <link href="<%=request.getContextPath()%>/images/favicon.ico" rel="icon" type="image/x-icon" />
 </head>
 <body>
 <% if (currentHttpSession == null) { %>
@@ -100,7 +100,7 @@
      </tr>
    </table>
 
-   <form method="post" action="<%= submitUrl %>">
+   <form method="POST" action="<%= submitUrl %>">
      <div>
        <input type="hidden" name="sessionId" value="<%= currentSessionId %>" />
        <input type="hidden" name="action" value="sessionDetail" />
@@ -147,7 +147,7 @@
    %>
            <tr>
                <td align="center">
-                   <form method="post" action="<%= submitUrl %>">
+                   <form method="POST" action="<%= submitUrl %>">
                        <div>
                            <input type="hidden" name="action" value="removeSessionAttribute" />
                            <input type="hidden" name="sessionId" value="<%= currentSessionId %>" />
@@ -173,7 +173,7 @@
    </table>
 <% } // endif%>
 
-<form method="post" action="<%=submitUrl%>">
+<form method="POST" action="<%=submitUrl%>">
   <p style="text-align: center;">
     <input type="submit" value="Return to session list" />
   </p>

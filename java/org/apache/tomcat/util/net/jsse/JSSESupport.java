@@ -37,9 +37,6 @@ import org.apache.tomcat.util.res.StringManager;
 
 /**
  * JSSESupport. Concrete implementation class for JSSE Support classes.
- *
- * @author EKR
- * @author Craig R. McClanahan Parts cribbed from JSSECertCompat Parts cribbed from CertificatesValve
  */
 public class JSSESupport implements SSLSupport, SSLSessionManager {
 
@@ -101,7 +98,9 @@ public class JSSESupport implements SSLSupport, SSLSessionManager {
         try {
             certs = session.getPeerCertificates();
         } catch (Throwable t) {
-            log.debug(sm.getString("jsseSupport.clientCertError"), t);
+            if (log.isDebugEnabled()) {
+                log.debug(sm.getString("jsseSupport.clientCertError"), t);
+            }
             return null;
         }
 
@@ -125,8 +124,8 @@ public class JSSESupport implements SSLSupport, SSLSessionManager {
                     CertificateFactory cf = CertificateFactory.getInstance("X.509");
                     ByteArrayInputStream stream = new ByteArrayInputStream(buffer);
                     x509Certs[i] = (X509Certificate) cf.generateCertificate(stream);
-                } catch (Exception ex) {
-                    log.info(sm.getString("jsseSupport.certTranslationError", certs[i]), ex);
+                } catch (Exception e) {
+                    log.info(sm.getString("jsseSupport.certTranslationError", certs[i]), e);
                     return null;
                 }
             }

@@ -40,14 +40,12 @@ import org.apache.tomcat.util.ExceptionUtils;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.buf.MessageBytes;
 import org.apache.tomcat.util.descriptor.web.LoginConfig;
+import org.apache.tomcat.util.http.Method;
 import org.apache.tomcat.util.http.MimeHeaders;
 
 /**
  * An <b>Authenticator</b> and <b>Valve</b> implementation of FORM BASED Authentication, as described in the Servlet API
  * Specification.
- *
- * @author Craig R. McClanahan
- * @author Remy Maucherat
  */
 public class FormAuthenticator extends AuthenticatorBase {
 
@@ -245,7 +243,7 @@ public class FormAuthenticator extends AuthenticatorBase {
             try {
                 saveRequest(request, session);
             } catch (IOException ioe) {
-                log.debug(sm.getString("authenticator.requestBodyTooBig"));
+                log.debug(sm.getString("authenticator.requestBodyTooBig"), ioe);
                 response.sendError(HttpServletResponse.SC_FORBIDDEN, sm.getString("authenticator.requestBodyTooBig"));
                 return false;
             }
@@ -301,7 +299,7 @@ public class FormAuthenticator extends AuthenticatorBase {
                 // the landing page
                 String uri = request.getContextPath() + landingPage;
                 SavedRequest saved = new SavedRequest();
-                saved.setMethod("GET");
+                saved.setMethod(Method.GET);
                 saved.setRequestURI(uri);
                 saved.setDecodedRequestURI(uri);
                 request.getSessionInternal(true).setNote(Constants.FORM_REQUEST_NOTE, saved);
@@ -326,7 +324,7 @@ public class FormAuthenticator extends AuthenticatorBase {
                 // the landing page
                 String uri = request.getContextPath() + landingPage;
                 SavedRequest saved = new SavedRequest();
-                saved.setMethod("GET");
+                saved.setMethod(Method.GET);
                 saved.setRequestURI(uri);
                 saved.setDecodedRequestURI(uri);
                 session.setNote(Constants.FORM_REQUEST_NOTE, saved);
@@ -443,7 +441,7 @@ public class FormAuthenticator extends AuthenticatorBase {
 
         // Always use GET for the login page, regardless of the method used
         String oldMethod = request.getMethod();
-        request.getCoyoteRequest().method().setString("GET");
+        request.getCoyoteRequest().setMethod(Method.GET);
 
         RequestDispatcher disp = context.getServletContext().getRequestDispatcher(loginPage);
         try {
@@ -459,7 +457,7 @@ public class FormAuthenticator extends AuthenticatorBase {
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg);
         } finally {
             // Restore original method so that it is written into access log
-            request.getCoyoteRequest().method().setString(oldMethod);
+            request.getCoyoteRequest().setMethod(oldMethod);
         }
     }
 
@@ -585,7 +583,7 @@ public class FormAuthenticator extends AuthenticatorBase {
         String method = saved.getMethod();
         MimeHeaders rmh = request.getCoyoteRequest().getMimeHeaders();
         rmh.recycle();
-        boolean cacheable = "GET".equalsIgnoreCase(method) || "HEAD".equalsIgnoreCase(method);
+        boolean cacheable = Method.GET.equals(method) || Method.HEAD.equals(method);
         Iterator<String> names = saved.getHeaderNames();
         while (names.hasNext()) {
             String name = names.next();
@@ -619,7 +617,7 @@ public class FormAuthenticator extends AuthenticatorBase {
 
             // If no content type specified, use default for POST
             String savedContentType = saved.getContentType();
-            if (savedContentType == null && "POST".equalsIgnoreCase(method)) {
+            if (savedContentType == null && Method.POST.equals(method)) {
                 savedContentType = Globals.CONTENT_TYPE_FORM_URL_ENCODING;
             }
 
@@ -627,7 +625,7 @@ public class FormAuthenticator extends AuthenticatorBase {
             request.getCoyoteRequest().setContentType(contentType);
         }
 
-        request.getCoyoteRequest().method().setString(method);
+        request.getCoyoteRequest().setMethod(method);
         // The method, URI, queryString and protocol are normally stored as
         // bytes in the HttpInputBuffer and converted lazily to String. At this
         // point, the method has already been set as String in the line above

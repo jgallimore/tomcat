@@ -48,9 +48,6 @@ import org.apache.tomcat.util.security.ConcurrentMessageDigest;
 /**
  * An <b>Authenticator</b> and <b>Valve</b> implementation of HTTP DIGEST Authentication, as outlined in RFC 7616: "HTTP
  * Digest Authentication"
- *
- * @author Craig R. McClanahan
- * @author Remy Maucherat
  */
 public class DigestAuthenticator extends AuthenticatorBase {
 
@@ -505,7 +502,7 @@ public class DigestAuthenticator extends AuthenticatorBase {
             Map<String,String> directives;
             try {
                 directives = Authorization.parseAuthorizationDigest(new StringReader(authorization));
-            } catch (IOException e) {
+            } catch (IOException ioe) {
                 return false;
             }
 

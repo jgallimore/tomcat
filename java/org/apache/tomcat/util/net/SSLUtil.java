@@ -90,4 +90,5 @@ public interface SSLUtil {
          */
         String getNegotiatedProtocol();
     }
+
 }

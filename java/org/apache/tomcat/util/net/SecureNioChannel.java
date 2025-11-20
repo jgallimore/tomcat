@@ -41,6 +41,8 @@ import org.apache.tomcat.util.buf.ByteBufferUtils;
 import org.apache.tomcat.util.net.NioEndpoint.NioSocketWrapper;
 import org.apache.tomcat.util.net.TLSClientHelloExtractor.ExtractorResult;
 import org.apache.tomcat.util.net.openssl.ciphers.Cipher;
+import org.apache.tomcat.util.net.openssl.ciphers.Group;
+import org.apache.tomcat.util.net.openssl.ciphers.SignatureScheme;
 import org.apache.tomcat.util.res.StringManager;
 
 /**
@@ -209,7 +211,7 @@ public class SecureNioChannel extends NioChannel {
                     }
                     // fall down to NEED_UNWRAP on the same call, will result in a
                     // BUFFER_UNDERFLOW if it needs data
-                    //$FALL-THROUGH$
+                    // $FALL-THROUGH$
                 case NEED_UNWRAP:
                     // perform the unwrap function
                     handshake = handshakeUnwrap(read);
@@ -272,6 +274,8 @@ public class SecureNioChannel extends NioChannel {
         String hostName = null;
         List<Cipher> clientRequestedCiphers = null;
         List<String> clientRequestedApplicationProtocols = null;
+        List<Group> clientSupportedGroups = null;
+        List<SignatureScheme> clientSignatureSchemes = null;
         switch (extractor.getResult()) {
             case COMPLETE:
                 hostName = extractor.getSNIValue();
@@ -279,6 +283,8 @@ public class SecureNioChannel extends NioChannel {
                 //$FALL-THROUGH$ to set the client requested ciphers
             case NOT_PRESENT:
                 clientRequestedCiphers = extractor.getClientRequestedCiphers();
+                clientSupportedGroups = extractor.getClientSupportedGroups();
+                clientSignatureSchemes = extractor.getClientSignatureSchemes();
                 break;
             case NEED_READ:
                 return SelectionKey.OP_READ;
@@ -302,7 +308,8 @@ public class SecureNioChannel extends NioChannel {
             log.trace(sm.getString("channel.nio.ssl.sniHostName", sc, hostName));
         }
 
-        createSSLEngine(hostName, clientRequestedCiphers, clientRequestedApplicationProtocols);
+        createSSLEngine(hostName, clientRequestedCiphers, clientRequestedApplicationProtocols,
+                extractor.getClientRequestedProtocols(), clientSupportedGroups, clientSignatureSchemes);
 
         // Populate additional TLS attributes obtained from the handshake that
         // aren't available from the session
@@ -390,23 +397,25 @@ public class SecureNioChannel extends NioChannel {
                         isWritable = key.isWritable();
                 }
             }
-        } catch (IOException x) {
+        } catch (IOException ioe) {
             closeSilently();
-            throw x;
-        } catch (Exception cx) {
+            throw ioe;
+        } catch (Exception e) {
             closeSilently();
-            throw new IOException(cx);
+            throw new IOException(e);
         } finally {
             if (key != null) {
                 try {
                     key.cancel();
                 } catch (Exception ignore) {
+                    // Ignore
                 }
             }
             if (selector != null) {
                 try {
                     selector.close();
                 } catch (Exception ignore) {
+                    // Ignore
                 }
             }
         }
@@ -576,7 +585,9 @@ public class SecureNioChannel extends NioChannel {
         } catch (IOException ioe) {
             // This is expected - swallowing the exception is the reason this
             // method exists. Log at debug in case someone is interested.
-            log.debug(sm.getString("channel.nio.ssl.closeSilentError"), ioe);
+            if (log.isDebugEnabled()) {
+                log.debug(sm.getString("channel.nio.ssl.closeSilentError"), ioe);
+            }
         }
     }
 
@@ -918,8 +929,10 @@ public class SecureNioChannel extends NioChannel {
     }
 
     protected void createSSLEngine(String hostName, List<Cipher> clientRequestedCiphers,
-            List<String> clientRequestedApplicationProtocols) {
-        sslEngine = endpoint.createSSLEngine(hostName, clientRequestedCiphers, clientRequestedApplicationProtocols);
+            List<String> clientRequestedApplicationProtocols, List<String> clientRequestedProtocols,
+            List<Group> clientSupportedGroups, List<SignatureScheme> clientSignatureSchemes) {
+        sslEngine = endpoint.createSSLEngine(hostName, clientRequestedCiphers, clientRequestedApplicationProtocols,
+                clientRequestedProtocols, clientSupportedGroups, clientSignatureSchemes);
     }
 
 

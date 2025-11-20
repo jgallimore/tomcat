@@ -39,10 +39,6 @@ import java.util.ResourceBundle;
  * <p>
  * Please see the documentation for java.util.ResourceBundle for more information.
  *
- * @author James Duncan Davidson [duncan@eng.sun.com]
- * @author James Todd [gonzo@eng.sun.com]
- * @author Mel Martinez [mmartinez@g1440.com]
- *
  * @see java.util.ResourceBundle
  */
 public class StringManager {
@@ -82,7 +78,7 @@ public class StringManager {
             if (cl != null) {
                 try {
                     bnd = ResourceBundle.getBundle(bundleName, locale, cl);
-                } catch (MissingResourceException ex2) {
+                } catch (MissingResourceException ignore) {
                     // Ignore
                 }
             }
@@ -113,8 +109,7 @@ public class StringManager {
      */
     public String getString(String key) {
         if (key == null) {
-            String msg = "key may not have a null value";
-            throw new IllegalArgumentException(msg);
+            throw new IllegalArgumentException("key may not have a null value");
         }
 
         String str = null;
@@ -124,7 +119,7 @@ public class StringManager {
             if (bundle != null) {
                 str = bundle.getString(key);
             }
-        } catch (MissingResourceException mre) {
+        } catch (MissingResourceException ignore) {
             // bad: shouldn't mask an exception the following way:
             // str = "[cannot find message associated with key '" + key +
             // "' due to " + mre + "]";

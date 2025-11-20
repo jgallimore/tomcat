@@ -16,11 +16,10 @@
  */
 package org.apache.catalina.filters;
 
+import org.apache.tomcat.util.http.Method;
 
 /**
  * Manifest constants for this Java package.
- *
- * @author Craig R. McClanahan
  */
 public final class Constants {
 
@@ -44,7 +43,8 @@ public final class Constants {
      */
     public static final String CSRF_NONCE_REQUEST_PARAM_NAME_KEY = "org.apache.catalina.filters.CSRF_NONCE_PARAM_NAME";
 
-    public static final String METHOD_GET = "GET";
+    @Deprecated
+    public static final String METHOD_GET = Method.GET;
 
     public static final String CSRF_REST_NONCE_HEADER_NAME = "X-CSRF-Token";
 

@@ -59,8 +59,6 @@ import org.eclipse.jdt.internal.compiler.problem.DefaultProblemFactory;
 /**
  * JDT class compiler. This compiler will load source dependencies from the context classloader, reducing dramatically
  * disk access during the compilation process. Based on code from Cocoon2.
- *
- * @author Remy Maucherat
  */
 public class JDTCompiler extends org.apache.jasper.compiler.Compiler {
 
@@ -114,8 +112,8 @@ public class JDTCompiler extends org.apache.jasper.compiler.Compiler {
                     }
                     result = new char[buf.length()];
                     buf.getChars(0, result.length, result, 0);
-                } catch (IOException e) {
-                    log.error(Localizer.getMessage("jsp.error.compilation.source", sourceFile), e);
+                } catch (IOException ioe) {
+                    log.error(Localizer.getMessage("jsp.error.compilation.source", sourceFile), ioe);
                 }
                 return result;
             }
@@ -334,10 +332,7 @@ public class JDTCompiler extends org.apache.jasper.compiler.Compiler {
             } else if (opt.equals("23")) {
                 settings.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_23);
             } else if (opt.equals("24")) {
-                // Constant not available in latest ECJ version shipped with
-                // Tomcat. May be supported in a snapshot build.
-                // This is checked against the actual version below.
-                settings.put(CompilerOptions.OPTION_Source, "24");
+                settings.put(CompilerOptions.OPTION_Source, CompilerOptions.VERSION_24);
             } else if (opt.equals("25")) {
                 // Constant not available in latest ECJ version shipped with
                 // Tomcat. May be supported in a snapshot build.
@@ -423,11 +418,8 @@ public class JDTCompiler extends org.apache.jasper.compiler.Compiler {
                 settings.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_23);
                 settings.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_23);
             } else if (opt.equals("24")) {
-                // Constant not available in latest ECJ version shipped with
-                // Tomcat. May be supported in a snapshot build.
-                // This is checked against the actual version below.
-                settings.put(CompilerOptions.OPTION_TargetPlatform, "24");
-                settings.put(CompilerOptions.OPTION_Compliance, "24");
+                settings.put(CompilerOptions.OPTION_TargetPlatform, CompilerOptions.VERSION_24);
+                settings.put(CompilerOptions.OPTION_Compliance, CompilerOptions.VERSION_24);
             } else if (opt.equals("25")) {
                 // Constant not available in latest ECJ version shipped with
                 // Tomcat. May be supported in a snapshot build.
@@ -484,8 +476,8 @@ public class JDTCompiler extends org.apache.jasper.compiler.Compiler {
                             }
                         }
                     }
-                } catch (IOException exc) {
-                    log.error(Localizer.getMessage("jsp.error.compilation.jdt"), exc);
+                } catch (IOException ioe) {
+                    log.error(Localizer.getMessage("jsp.error.compilation.jdt"), ioe);
                 }
             }
         };

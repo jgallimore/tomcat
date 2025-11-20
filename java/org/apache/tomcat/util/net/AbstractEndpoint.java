@@ -52,10 +52,13 @@ import org.apache.tomcat.util.ExceptionUtils;
 import org.apache.tomcat.util.IntrospectionUtils;
 import org.apache.tomcat.util.buf.HexUtils;
 import org.apache.tomcat.util.collections.SynchronizedStack;
+import org.apache.tomcat.util.compat.JreCompat;
 import org.apache.tomcat.util.modeler.Registry;
 import org.apache.tomcat.util.net.Acceptor.AcceptorState;
 import org.apache.tomcat.util.net.SSLHostConfigCertificate.StoreType;
 import org.apache.tomcat.util.net.openssl.ciphers.Cipher;
+import org.apache.tomcat.util.net.openssl.ciphers.Group;
+import org.apache.tomcat.util.net.openssl.ciphers.SignatureScheme;
 import org.apache.tomcat.util.res.StringManager;
 import org.apache.tomcat.util.threads.LimitLatch;
 import org.apache.tomcat.util.threads.ResizableExecutor;
@@ -67,9 +70,6 @@ import org.apache.tomcat.util.threads.VirtualThreadExecutor;
 /**
  * @param <S> The type used by the socket wrapper associated with this endpoint. Might be the same as U.
  * @param <U> The type of the underlying socket used by this endpoint. Might be the same as S.
- *
- * @author Mladen Turk
- * @author Remy Maucherat
  */
 public abstract class AbstractEndpoint<S, U> {
 
@@ -396,12 +396,6 @@ public abstract class AbstractEndpoint<S, U> {
      */
     protected void createSSLContext(SSLHostConfig sslHostConfig) throws IllegalArgumentException {
 
-        // HTTP/2 does not permit optional certificate authentication with any
-        // version of TLS.
-        if (sslHostConfig.getCertificateVerification().isOptional() && negotiableProtocols.contains("h2")) {
-            getLog().warn(sm.getString("sslHostConfig.certificateVerificationWithHttp2", sslHostConfig.getHostName()));
-        }
-
         boolean firstCertificate = true;
         for (SSLHostConfigCertificate certificate : sslHostConfig.getCertificates(true)) {
             SSLUtil sslUtil = sslImplementation.getSSLUtil(certificate);
@@ -431,6 +425,7 @@ public abstract class AbstractEndpoint<S, U> {
 
             logCertificate(certificate);
         }
+
     }
 
 
@@ -508,10 +503,12 @@ public abstract class AbstractEndpoint<S, U> {
     }
 
     protected SSLEngine createSSLEngine(String sniHostName, List<Cipher> clientRequestedCiphers,
-            List<String> clientRequestedApplicationProtocols) {
+            List<String> clientRequestedApplicationProtocols, List<String> clientRequestedProtocols,
+            List<Group> clientSupportedGroups, List<SignatureScheme> clientSignatureSchemes) {
         SSLHostConfig sslHostConfig = getSSLHostConfig(sniHostName);
 
-        SSLHostConfigCertificate certificate = selectCertificate(sslHostConfig, clientRequestedCiphers);
+        SSLHostConfigCertificate certificate = selectCertificate(sslHostConfig, clientRequestedCiphers,
+                clientRequestedProtocols, clientSignatureSchemes);
 
         SSLContext sslContext = certificate.getSslContext();
         if (sslContext == null) {
@@ -537,6 +534,30 @@ public abstract class AbstractEndpoint<S, U> {
                 sslParameters.setApplicationProtocols(commonProtocolsArray);
             }
         }
+        // Merge server groups with the client groups
+        if (JreCompat.isJre20Available()) {
+            List<String> supportedGroups = new ArrayList<>();
+            LinkedHashSet<Group> serverSupportedGroups = sslHostConfig.getGroupList();
+            if (serverSupportedGroups != null) {
+                if (!clientSupportedGroups.isEmpty()) {
+                    for (Group group : clientSupportedGroups) {
+                        if (serverSupportedGroups.contains(group)) {
+                            supportedGroups.add(group.toString());
+                        }
+                    }
+                } else {
+                    for (Group group : serverSupportedGroups) {
+                        supportedGroups.add(group.toString());
+                    }
+                }
+                JreCompat.getInstance().setNamedGroupsMethod(sslParameters, supportedGroups.toArray(new String[0]));
+            } else if (!clientSupportedGroups.isEmpty()) {
+                for (Group group : clientSupportedGroups) {
+                    supportedGroups.add(group.toString());
+                }
+                JreCompat.getInstance().setNamedGroupsMethod(sslParameters, supportedGroups.toArray(new String[0]));
+            }
+        }
         switch (sslHostConfig.getCertificateVerification()) {
             case NONE:
                 sslParameters.setNeedClientAuth(false);
@@ -557,11 +578,24 @@ public abstract class AbstractEndpoint<S, U> {
     }
 
 
-    private SSLHostConfigCertificate selectCertificate(SSLHostConfig sslHostConfig, List<Cipher> clientCiphers) {
+    private SSLHostConfigCertificate selectCertificate(SSLHostConfig sslHostConfig, List<Cipher> clientCiphers,
+            List<String> clientRequestedProtocols, List<SignatureScheme> clientSignatureSchemes) {
 
         Set<SSLHostConfigCertificate> certificates = sslHostConfig.getCertificates(true);
         if (certificates.size() == 1) {
             return certificates.iterator().next();
+        }
+
+        // Use signature algorithm for cipher matching with TLS 1.3
+        if ((clientRequestedProtocols.contains(Constants.SSL_PROTO_TLSv1_3)) &&
+                sslHostConfig.getProtocols().contains(Constants.SSL_PROTO_TLSv1_3)) {
+            for (SignatureScheme signatureScheme : clientSignatureSchemes) {
+                for (SSLHostConfigCertificate certificate : certificates) {
+                    if (certificate.getType().isCompatibleWith(signatureScheme)) {
+                        return certificate;
+                    }
+                }
+            }
         }
 
         LinkedHashSet<Cipher> serverCiphers = sslHostConfig.getCipherList();
@@ -1264,8 +1298,8 @@ public abstract class AbstractEndpoint<S, U> {
             } else {
                 return IntrospectionUtils.setProperty(this, name, value, false);
             }
-        } catch (Exception x) {
-            getLog().error(sm.getString("endpoint.setAttributeError", name, value), x);
+        } catch (Exception e) {
+            getLog().error(sm.getString("endpoint.setAttributeError", name, value), e);
             return false;
         }
     }
@@ -1387,7 +1421,9 @@ public abstract class AbstractEndpoint<S, U> {
         try {
             localAddress = getLocalAddress();
         } catch (IOException ioe) {
-            getLog().debug(sm.getString("endpoint.debug.unlock.localFail", getName()), ioe);
+            if (getLog().isDebugEnabled()) {
+                getLog().debug(sm.getString("endpoint.debug.unlock.localFail", getName()), ioe);
+            }
         }
         if (localAddress == null) {
             getLog().warn(sm.getString("endpoint.debug.unlock.localNone", getName()));

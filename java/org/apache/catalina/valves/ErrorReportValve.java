@@ -42,21 +42,11 @@ import org.apache.tomcat.util.res.StringManager;
 import org.apache.tomcat.util.security.Escape;
 
 /**
- * <p>
  * Implementation of a Valve that outputs HTML error pages.
- * </p>
  * <p>
  * This Valve should be attached at the Host level, although it will work if attached to a Context.
- * </p>
  * <p>
  * HTML code from the Cocoon 2 project.
- * </p>
- *
- * @author Remy Maucherat
- * @author Craig R. McClanahan
- * @author <a href="mailto:nicolaken@supereva.it">Nicola Ken Barozzi</a> Aisa
- * @author <a href="mailto:stefano@apache.org">Stefano Mazzocchi</a>
- * @author Yoav Shapira
  */
 public class ErrorReportValve extends ValveBase {
 
@@ -389,11 +379,10 @@ public class ErrorReportValve extends ValveBase {
         response.setContentType("text/html");
         response.setCharacterEncoding("UTF-8");
 
-        try (OutputStream os = response.getOutputStream();
-             InputStream is = new FileInputStream(file)) {
+        try (OutputStream os = response.getOutputStream(); InputStream is = new FileInputStream(file)) {
             IOTools.flow(is, os);
-        } catch (IOException e) {
-            getContainer().getLogger().warn(sm.getString("errorReportValve.errorPageIOException", location), e);
+        } catch (IOException ioe) {
+            getContainer().getLogger().warn(sm.getString("errorReportValve.errorPageIOException", location), ioe);
             return false;
         }
 

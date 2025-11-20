@@ -18,58 +18,56 @@ package org.apache.catalina.core;
 
 /**
  * Holds APR status without the need to load other classes.
+ *
+ * @deprecated Unused. Use {@link org.apache.tomcat.jni.AprStatus} instead. This class will be removed in Tomcat 12
+ *                 onwards.
  */
+@Deprecated
 public class AprStatus {
-    private static volatile boolean aprInitialized = false;
-    private static volatile boolean aprAvailable = false;
-    private static volatile boolean useOpenSSL = true;
-    private static volatile boolean instanceCreated = false;
-    private static volatile int openSSLVersion = 0;
 
     public static boolean isAprInitialized() {
-        return aprInitialized;
+        return org.apache.tomcat.jni.AprStatus.isAprInitialized();
     }
 
     public static boolean isAprAvailable() {
-        return aprAvailable;
+        return org.apache.tomcat.jni.AprStatus.isAprAvailable();
     }
 
     public static boolean getUseOpenSSL() {
-        return useOpenSSL;
+        return org.apache.tomcat.jni.AprStatus.getUseOpenSSL();
     }
 
     public static boolean isInstanceCreated() {
-        return instanceCreated;
+        return org.apache.tomcat.jni.AprStatus.isInstanceCreated();
     }
 
     public static void setAprInitialized(boolean aprInitialized) {
-        AprStatus.aprInitialized = aprInitialized;
+        org.apache.tomcat.jni.AprStatus.setAprInitialized(aprInitialized);
     }
 
     public static void setAprAvailable(boolean aprAvailable) {
-        AprStatus.aprAvailable = aprAvailable;
+        org.apache.tomcat.jni.AprStatus.setAprAvailable(aprAvailable);
     }
 
     public static void setUseOpenSSL(boolean useOpenSSL) {
-        AprStatus.useOpenSSL = useOpenSSL;
+        org.apache.tomcat.jni.AprStatus.setUseOpenSSL(useOpenSSL);
     }
 
     public static void setInstanceCreated(boolean instanceCreated) {
-        AprStatus.instanceCreated = instanceCreated;
+        org.apache.tomcat.jni.AprStatus.setInstanceCreated(instanceCreated);
     }
 
     /**
      * @return the openSSLVersion
      */
     public static int getOpenSSLVersion() {
-        return openSSLVersion;
+        return org.apache.tomcat.jni.AprStatus.getOpenSSLVersion();
     }
 
     /**
      * @param openSSLVersion the openSSLVersion to set
      */
     public static void setOpenSSLVersion(int openSSLVersion) {
-        AprStatus.openSSLVersion = openSSLVersion;
+        org.apache.tomcat.jni.AprStatus.setOpenSSLVersion(openSSLVersion);
     }
-
 }

@@ -39,9 +39,6 @@ import org.apache.tools.ant.types.FileSet;
  * special characters with their HTML escaped equivalents.
  * <p>
  * This task is currently used by the ant script to build our examples
- * </p>
- *
- * @author Mark Roth
  */
 public class Txt2Html extends Task {
 
@@ -102,10 +99,10 @@ public class Txt2Html extends Task {
                             Project.MSG_VERBOSE);
                     try {
                         convert(from, to);
-                    } catch (IOException e) {
+                    } catch (IOException ioe) {
                         throw new BuildException(
                                 "Could not convert '" + from.getAbsolutePath() + "' to '" + to.getAbsolutePath() + "'",
-                                e);
+                                ioe);
                     }
                     count++;
                 }

@@ -144,9 +144,9 @@ public class ParameterLimitValve extends ValveBase {
             try {
                 ConfigurationSource.Resource resource = ConfigFileLoader.getSource().getResource(resourceName);
                 is = resource.getInputStream();
-            } catch (IOException e) {
+            } catch (IOException ioe) {
                 if (containerLog.isDebugEnabled()) {
-                    containerLog.debug(sm.getString("parameterLimitValve.noConfiguration", resourceName), e);
+                    containerLog.debug(sm.getString("parameterLimitValve.noConfiguration", resourceName), ioe);
                 }
             }
         }
@@ -164,8 +164,8 @@ public class ParameterLimitValve extends ValveBase {
         } finally {
             try {
                 is.close();
-            } catch (IOException e) {
-                containerLog.error(sm.getString("parameterLimitValve.closeError"), e);
+            } catch (IOException ioe) {
+                containerLog.error(sm.getString("parameterLimitValve.closeError"), ioe);
             }
         }
 
@@ -217,10 +217,10 @@ public class ParameterLimitValve extends ValveBase {
                 Pattern pattern = Pattern.compile(UDecoder.URLDecode(patternString, StandardCharsets.UTF_8));
                 String[] limits = limitsString.split(",");
                 if (limits.length == 1) {
-                    urlPatternLimits.put(pattern, new Integer[] { Integer.valueOf(limits[0]), null, null});
+                    urlPatternLimits.put(pattern, new Integer[] { Integer.valueOf(limits[0]), null, null });
                 } else if (limits.length == 3) {
-                    urlPatternLimits.put(pattern, new Integer[] {
-                            Integer.valueOf(limits[0]), Integer.valueOf(limits[1]), Integer.valueOf(limits[2])});
+                    urlPatternLimits.put(pattern, new Integer[] { Integer.valueOf(limits[0]),
+                            Integer.valueOf(limits[1]), Integer.valueOf(limits[2]) });
                 } else {
                     throw new IllegalArgumentException(
                             sm.getString("parameterLimitValve.invalidLimitsString", limitsString));
@@ -229,8 +229,10 @@ public class ParameterLimitValve extends ValveBase {
                     containerLog.trace("Add pattern " + pattern + " and limit(s) " + limitsString);
                 }
             }
-        } catch (IOException e) {
-            containerLog.error(sm.getString("parameterLimitValve.readError"), e);
+        } catch (IOException ioe) {
+            if (containerLog != null) {
+                containerLog.error(sm.getString("parameterLimitValve.readError"), ioe);
+            }
         }
     }
 

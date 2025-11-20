@@ -45,6 +45,7 @@ import org.apache.catalina.startup.TomcatBaseTest;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.buf.ByteChunk;
+import org.apache.tomcat.util.http.Method;
 import org.apache.tomcat.util.json.JSONParser;
 import org.apache.tomcat.util.json.ParseException;
 
@@ -109,7 +110,7 @@ public class TestAccessLogValve extends TomcatBaseTest {
         parameterSets.add(new Object[] {"pct-I", JSON_TYPE, "/", "%I", "\\{\"threadName\":\"http-nio2?-" + LOCAL_IP_PATTERN + "-auto-\\d+-exec-\\d+\"\\}"});
         parameterSets.add(new Object[] {"pct-l", TEXT_TYPE, "/", "%l", "-"});
         parameterSets.add(new Object[] {"pct-l", JSON_TYPE, "/", "%l", "\\{\"logicalUserName\":\"-\"\\}"});
-        parameterSets.add(new Object[] {"pct-m", TEXT_TYPE, "/", "%m", "GET"});
+        parameterSets.add(new Object[] {"pct-m", TEXT_TYPE, "/", "%m", Method.GET});
         parameterSets.add(new Object[] {"pct-m", JSON_TYPE, "/", "%m", "\\{\"method\":\"GET\"\\}"});
         parameterSets.add(new Object[] {"pct-p", TEXT_TYPE, "/", "%p", "\\d+"});
         parameterSets.add(new Object[] {"pct-p", JSON_TYPE, "/", "%p", "\\{\"port\":\"\\d+\"\\}"});
@@ -212,8 +213,8 @@ public class TestAccessLogValve extends TomcatBaseTest {
         public void log(CharArrayWriter message) {
             try {
                 message.writeTo(writer);
-            } catch (IOException ex) {
-                log.error("Could not write to writer", ex);
+            } catch (IOException ioe) {
+                log.error("Could not write to writer", ioe);
             }
         }
     }
@@ -233,8 +234,8 @@ public class TestAccessLogValve extends TomcatBaseTest {
         public void log(CharArrayWriter message) {
             try {
                 message.writeTo(writer);
-            } catch (IOException ex) {
-                log.error("Could not write to writer", ex);
+            } catch (IOException ioe) {
+                log.error("Could not write to writer", ioe);
             }
         }
     }

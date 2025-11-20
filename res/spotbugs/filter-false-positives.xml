@@ -636,12 +636,6 @@
     <Bug pattern="RV_RETURN_VALUE_IGNORED_BAD_PRACTICE" />
   </Match>
   <Match>
-    <!-- Monitor only used for election -->
-    <Class name="org.apache.catalina.tribes.group.interceptors.NonBlockingCoordinator"/>
-    <Method name="startElection"/>
-    <Bug pattern="WA_NOT_IN_LOOP"/>
-  </Match>
-  <Match>
     <Class name="org.apache.catalina.tribes.group.interceptors.TcpFailureDetector"/>
     <Method name="memberAlive"/>
     <Bug code="DE"/>
@@ -663,11 +657,6 @@
     <Class name="org.apache.catalina.tribes.group.GroupChannel" />
     <Field name="utilityExecutor" />
     <Bug pattern="IS2_INCONSISTENT_SYNC" />
-  </Match>
-  <Match>
-    <Class name="org.apache.catalina.tribes.group.RpcChannel"/>
-    <Method name="send"/>
-    <Bug pattern="WA_NOT_IN_LOOP"/>
   </Match>
   <Match>
     <!-- Class lock is not an instance lock -->
@@ -1022,12 +1011,6 @@
     <Class name="org.apache.coyote.http2.WindowAllocationManager" />
     <Method name="notify" />
     <Bug pattern="NO_NOTIFY_NOT_NOTIFYALL" />
-  </Match>
-  <Match>
-    <!-- Monitor is used for a single condition. -->
-    <Class name="org.apache.coyote.http2.WindowAllocationManager" />
-    <Method name="waitFor" />
-    <Bug pattern="WA_NOT_IN_LOOP" />
   </Match>
   <Match>
     <!-- Returning null is required by the EL specification -->
@@ -1623,25 +1606,10 @@
     <Bug code="ML"/>
   </Match>
   <Match>
-    <!-- Single condition so no need for wait to be in loop -->
-    <Class name="org.apache.tomcat.util.net.NioEndpoint$NioSocketWrapper"/>
-    <Method name="fillReadBuffer"/>
-    <Bug pattern="WA_NOT_IN_LOOP" />
-  </Match>
-  <Match>
     <!-- Single condition so notify() is OK -->
     <Class name="org.apache.tomcat.util.net.NioEndpoint$Poller"/>
     <Method name="processKey"/>
     <Bug pattern="NO_NOTIFY_NOT_NOTIFYALL" />
-  </Match>
-  <Match>
-    <!-- Single condition so no need for wait to be in loop -->
-    <Class name="org.apache.tomcat.util.net.Nio2Endpoint$Nio2SocketWrapper"/>
-    <Or>
-      <Method name="read"/>
-      <Method name="write"/>
-    </Or>
-    <Bug pattern="WA_NOT_IN_LOOP" />
   </Match>
   <Match>
     <!-- Single wait so no need for notifyAll() -->
@@ -1674,12 +1642,6 @@
     <Class name="org.apache.tomcat.util.net.SecureNio2Channel" />
     <Method name="processSNI"/>
     <Bug code="SF" />
-  </Match>
-  <Match>
-  <!-- Single condition so fine -->
-    <Class name="org.apache.tomcat.util.net.SocketWrapperBase" />
-    <Method name="vectoredOperation"/>
-    <Bug pattern="WA_NOT_IN_LOOP" />
   </Match>
   <Match>
   <!-- Single condition so notify is fine -->
@@ -1720,12 +1682,6 @@
     <Class name="org.apache.tomcat.util.threads.ThreadPoolExecutor" />
     <Method name="runWorker" />
     <Bug pattern="VO_VOLATILE_INCREMENT " />
-  </Match>
-  <Match>
-    <!-- Monitor is used for a single condition. No need for loop. -->
-    <Class name="org.apache.tomcat.util.threads.InlineExecutorService" />
-    <Method name="awaitTermination" />
-    <Bug pattern="WA_NOT_IN_LOOP" />
   </Match>
   <Match>
     <!-- Random will be SecureRandom and will be used multiple times. -->

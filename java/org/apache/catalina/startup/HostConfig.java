@@ -68,9 +68,6 @@ import org.apache.tomcat.util.res.StringManager;
 /**
  * Startup event listener for a <b>Host</b> that configures the properties of that Host, and the associated defined
  * contexts.
- *
- * @author Craig R. McClanahan
- * @author Remy Maucherat
  */
 public class HostConfig implements LifecycleListener {
 
@@ -350,7 +347,7 @@ public class HostConfig implements LifecycleListener {
         }
         try {
             return file.getCanonicalFile();
-        } catch (IOException e) {
+        } catch (IOException ioe) {
             return file;
         }
     }
@@ -801,8 +798,8 @@ public class HostConfig implements LifecycleListener {
             if (entry != null) {
                 xmlInWar = true;
             }
-        } catch (IOException e) {
-            /* Ignore */
+        } catch (IOException ignore) {
+            // Ignore
         }
 
         // If there is an expanded directory then any xml in that directory
@@ -886,8 +883,8 @@ public class HostConfig implements LifecycleListener {
                             OutputStream ostream = new FileOutputStream(xml)) {
                         IOTools.flow(istream, ostream);
                     }
-                } catch (IOException e) {
-                    /* Ignore */
+                } catch (IOException ignore) {
+                    // Ignore
                 }
             }
         }
@@ -1511,16 +1508,16 @@ public class HostConfig implements LifecycleListener {
         String canonicalLocation;
         try {
             canonicalLocation = resource.getParentFile().getCanonicalPath();
-        } catch (IOException e) {
-            log.warn(sm.getString("hostConfig.canonicalizing", resource.getParentFile(), app.name), e);
+        } catch (IOException ioe) {
+            log.warn(sm.getString("hostConfig.canonicalizing", resource.getParentFile(), app.name), ioe);
             return false;
         }
 
         String canonicalAppBase;
         try {
             canonicalAppBase = host.getAppBaseFile().getCanonicalPath();
-        } catch (IOException e) {
-            log.warn(sm.getString("hostConfig.canonicalizing", host.getAppBaseFile(), app.name), e);
+        } catch (IOException ioe) {
+            log.warn(sm.getString("hostConfig.canonicalizing", host.getAppBaseFile(), app.name), ioe);
             return false;
         }
 
@@ -1532,8 +1529,8 @@ public class HostConfig implements LifecycleListener {
         String canonicalConfigBase;
         try {
             canonicalConfigBase = host.getConfigBaseFile().getCanonicalPath();
-        } catch (IOException e) {
-            log.warn(sm.getString("hostConfig.canonicalizing", host.getConfigBaseFile(), app.name), e);
+        } catch (IOException ioe) {
+            log.warn(sm.getString("hostConfig.canonicalizing", host.getConfigBaseFile(), app.name), ioe);
             return false;
         }
 

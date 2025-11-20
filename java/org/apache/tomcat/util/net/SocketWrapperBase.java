@@ -420,10 +420,10 @@ public abstract class SocketWrapperBase<E> {
         if (closed.compareAndSet(false, true)) {
             try {
                 getEndpoint().getHandler().release(this);
-            } catch (Throwable e) {
-                ExceptionUtils.handleThrowable(e);
+            } catch (Throwable t) {
+                ExceptionUtils.handleThrowable(t);
                 if (log.isDebugEnabled()) {
-                    log.error(sm.getString("endpoint.debug.handlerRelease"), e);
+                    log.error(sm.getString("endpoint.debug.handlerRelease"), t);
                 }
             } finally {
                 getEndpoint().countDownConnection();
@@ -1359,7 +1359,13 @@ public abstract class SocketWrapperBase<E> {
             synchronized (state) {
                 if (state.state == CompletionState.PENDING) {
                     try {
-                        state.wait(unit.toMillis(timeout));
+                        long timeoutExpiry = System.nanoTime() + unit.toNanos(timeout);
+                        long timeoutMillis = unit.toMillis(timeout);
+                         // Spurious wake-ups are possible. Keep waiting until state changes or timeout expires.
+                        while (state.state == CompletionState.PENDING && timeoutMillis > 0) {
+                            state.wait(unit.toMillis(timeout));
+                            timeoutMillis = (timeoutExpiry - System.nanoTime()) / 1_000_000;
+                        }
                         if (state.state == CompletionState.PENDING) {
                             if (handler != null && state.callHandler.compareAndSet(true, false)) {
                                 handler.failed(new SocketTimeoutException(getTimeoutMsg(read)), attachment);

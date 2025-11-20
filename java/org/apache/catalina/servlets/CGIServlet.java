@@ -58,6 +58,7 @@ import org.apache.catalina.util.IOTools;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.compat.JrePlatform;
+import org.apache.tomcat.util.http.Method;
 import org.apache.tomcat.util.res.StringManager;
 
 
@@ -197,16 +198,11 @@ import org.apache.tomcat.util.res.StringManager;
  * <li>Confirm use of ServletInputStream.available() in CGIRunner.run() is not needed
  * <li>[add more to this TODO list]
  * </ul>
- *
- * @author Martin T Dengler [root@martindengler.com]
- * @author Amy Roh
  */
 public final class CGIServlet extends HttpServlet {
 
     private static final Log log = LogFactory.getLog(CGIServlet.class);
     private static final StringManager sm = StringManager.getManager(CGIServlet.class);
-
-    /* some vars below copied from Craig R. McClanahan's InvokerServlet */
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -216,9 +212,9 @@ public final class CGIServlet extends HttpServlet {
     private static final String ALLOW_ANY_PATTERN = ".*";
 
     static {
-        DEFAULT_SUPER_METHODS.add("HEAD");
-        DEFAULT_SUPER_METHODS.add("OPTIONS");
-        DEFAULT_SUPER_METHODS.add("TRACE");
+        DEFAULT_SUPER_METHODS.add(Method.HEAD);
+        DEFAULT_SUPER_METHODS.add(Method.OPTIONS);
+        DEFAULT_SUPER_METHODS.add(Method.TRACE);
 
         if (JrePlatform.IS_WINDOWS) {
             DEFAULT_CMD_LINE_ARGUMENTS_DECODED_PATTERN = Pattern.compile("[\\w\\Q-.\\/:\\E]+");
@@ -291,9 +287,6 @@ public final class CGIServlet extends HttpServlet {
 
     /**
      * Sets instance variables.
-     * <P>
-     * Modified from Craig R. McClanahan's InvokerServlet
-     * </P>
      *
      * @param config a <code>ServletConfig</code> object containing the servlet's configuration and initialization
      *                   parameters
@@ -370,8 +363,8 @@ public final class CGIServlet extends HttpServlet {
                 }
             }
         } else {
-            cgiMethods.add("GET");
-            cgiMethods.add("POST");
+            cgiMethods.add(Method.GET);
+            cgiMethods.add(Method.POST);
         }
 
         if (getServletConfig().getInitParameter("cmdLineArgumentsEncoded") != null) {
@@ -398,9 +391,6 @@ public final class CGIServlet extends HttpServlet {
 
     /**
      * Logs important Servlet API and container information.
-     * <p>
-     * Based on SnoopAllServlet by Craig R. McClanahan
-     * </p>
      *
      * @param req HttpServletRequest object used as source of information
      */
@@ -431,7 +421,9 @@ public final class CGIServlet extends HttpServlet {
                 }
             }
         } catch (IllegalStateException ise) {
-            log.trace("Request Parameters: [Invalid]");
+            if (log.isTraceEnabled()) {
+                log.trace("Request Parameters: [Invalid]", ise);
+            }
         }
         log.trace("Protocol: [" + req.getProtocol() + "]");
         log.trace("Remote Address: [" + req.getRemoteAddr() + "]");
@@ -561,7 +553,7 @@ public final class CGIServlet extends HttpServlet {
             CGIRunner cgi = new CGIRunner(cgiEnv.getCommand(), cgiEnv.getEnvironment(), cgiEnv.getWorkingDirectory(),
                     cgiEnv.getParameters());
 
-            if ("POST".equals(req.getMethod())) {
+            if (Method.POST.equals(req.getMethod())) {
                 cgi.setInput(req.getInputStream());
             }
             cgi.setResponse(res);
@@ -731,8 +723,8 @@ public final class CGIServlet extends HttpServlet {
             // does not contain an unencoded "=" this is an indexed query.
             // The parsed query string becomes the command line parameters
             // for the cgi command.
-            if (enableCmdLineArguments && (req.getMethod().equals("GET") || req.getMethod().equals("POST") ||
-                    req.getMethod().equals("HEAD"))) {
+            if (enableCmdLineArguments && (Method.GET.equals(req.getMethod()) || Method.POST.equals(req.getMethod()) ||
+                    Method.HEAD.equals(req.getMethod()))) {
                 String qs;
                 if (isIncluded) {
                     qs = (String) req.getAttribute(RequestDispatcher.INCLUDE_QUERY_STRING);
@@ -1402,10 +1394,6 @@ public final class CGIServlet extends HttpServlet {
                 throw new IOException(sm.getString("cgiServlet.invalidCommand", command));
             }
 
-            /*
-             * original content/structure of this section taken from
-             * http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4216884 with major modifications by Martin Dengler
-             */
             Runtime rt;
             BufferedReader cgiHeaderReader = null;
             InputStream cgiOutput = null;
@@ -1519,9 +1507,9 @@ public final class CGIServlet extends HttpServlet {
                     }
                 } // replacement for Process.waitFor()
 
-            } catch (IOException e) {
-                log.warn(sm.getString("cgiServlet.runFail"), e);
-                throw e;
+            } catch (IOException ioe) {
+                log.warn(sm.getString("cgiServlet.runFail"), ioe);
+                throw ioe;
             } finally {
                 // Close the header reader
                 if (cgiHeaderReader != null) {
@@ -1544,7 +1532,7 @@ public final class CGIServlet extends HttpServlet {
                     try {
                         errReaderThread.join(stderrTimeout);
                     } catch (InterruptedException e) {
-                        log.warn(sm.getString("cgiServlet.runReaderInterrupt"));
+                        log.warn(sm.getString("cgiServlet.runReaderInterrupt"), e);
                     }
                 }
                 if (proc != null) {
@@ -1622,13 +1610,13 @@ public final class CGIServlet extends HttpServlet {
                     log.warn(sm.getString("cgiServlet.runStdErr", line));
                     lineCount++;
                 }
-            } catch (IOException e) {
-                log.warn(sm.getString("cgiServlet.runStdErrFail"), e);
+            } catch (IOException ioe) {
+                log.warn(sm.getString("cgiServlet.runStdErrFail"), ioe);
             } finally {
                 try {
                     rdr.close();
-                } catch (IOException e) {
-                    log.warn(sm.getString("cgiServlet.runStdErrFail"), e);
+                } catch (IOException ioe) {
+                    log.warn(sm.getString("cgiServlet.runStdErrFail"), ioe);
                 }
             }
             if (lineCount > 0) {

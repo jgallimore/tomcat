@@ -75,6 +75,7 @@ import org.apache.catalina.util.URLEncoder;
 import org.apache.catalina.webresources.CachedResource;
 import org.apache.tomcat.util.buf.B2CConverter;
 import org.apache.tomcat.util.http.FastHttpDateFormat;
+import org.apache.tomcat.util.http.Method;
 import org.apache.tomcat.util.http.ResponseUtil;
 import org.apache.tomcat.util.http.parser.ContentRange;
 import org.apache.tomcat.util.http.parser.EntityTag;
@@ -126,9 +127,6 @@ import org.apache.tomcat.util.security.Escape;
  * Then a request to <code>/context/static/images/tomcat.jpg</code> will succeed while a request to
  * <code>/context/images/tomcat2.jpg</code> will fail.
  * </p>
- *
- * @author Craig R. McClanahan
- * @author Remy Maucherat
  */
 public class DefaultServlet extends HttpServlet {
 
@@ -679,8 +677,8 @@ public class DefaultServlet extends HttpServlet {
                 }
             } else {
                 try {
-                    resp.sendError(resourceInputStream != null ?
-                            HttpServletResponse.SC_CONFLICT : HttpServletResponse.SC_BAD_REQUEST);
+                    resp.sendError(resourceInputStream != null ? HttpServletResponse.SC_CONFLICT :
+                            HttpServletResponse.SC_BAD_REQUEST);
                 } catch (IllegalStateException e) {
                     // Already committed, ignore
                 }
@@ -689,7 +687,7 @@ public class DefaultServlet extends HttpServlet {
             if (resourceInputStream != null) {
                 try {
                     resourceInputStream.close();
-                } catch (IOException ioe) {
+                } catch (IOException ignore) {
                     // Ignore
                 }
             }
@@ -1089,7 +1087,7 @@ public class DefaultServlet extends HttpServlet {
                     response.setContentType(contentType);
                 }
             }
-            if (resource.isFile() && contentLength >= 0 && (!serveContent || ostream != null)) {
+            if (resource.isFile() && contentLength >= 0 && (!serveContent || ostream != null || writer != null)) {
                 if (debug > 0) {
                     log("DefaultServlet.serveFile:  contentLength=" + contentLength);
                 }
@@ -1103,8 +1101,8 @@ public class DefaultServlet extends HttpServlet {
             if (serveContent) {
                 try {
                     response.setBufferSize(output);
-                } catch (IllegalStateException e) {
-                    // Silent catch
+                } catch (IllegalStateException ignore) {
+                    // Content has already been written - this must be an include. Ignore the error and continue.
                 }
                 InputStream renderResult = null;
                 if (ostream == null) {
@@ -1217,8 +1215,8 @@ public class DefaultServlet extends HttpServlet {
                 if (serveContent) {
                     try {
                         response.setBufferSize(output);
-                    } catch (IllegalStateException e) {
-                        // Silent catch
+                    } catch (IllegalStateException ignore) {
+                        // Content has already been written - this must be an include. Ignore the error and continue.
                     }
                     if (ostream != null) {
                         if (!checkSendfile(request, response, resource, contentLength, range)) {
@@ -1235,7 +1233,7 @@ public class DefaultServlet extends HttpServlet {
                     try {
                         response.setBufferSize(output);
                     } catch (IllegalStateException e) {
-                        // Silent catch
+                        // Content has already been written - this must be an include. Ignore the error and continue.
                     }
                     if (ostream != null) {
                         copy(resource, contentLength, ostream, ranges, contentType);
@@ -1565,7 +1563,7 @@ public class DefaultServlet extends HttpServlet {
             return FULL;
         }
 
-        if (!"GET".equals(request.getMethod()) || !isRangeRequestsSupported()) {
+        if (!Method.GET.equals(request.getMethod()) || !isRangeRequestsSupported()) {
             // RFC 9110 - Section 14.2: GET is the only method for which range handling is defined.
             // Otherwise MUST ignore a Range header field
             return FULL;
@@ -2015,15 +2013,15 @@ public class DefaultServlet extends HttpServlet {
                     }
                     IOException e = copyRange(reader, new PrintWriter(buffer));
                     if (debug > 10) {
-                        log("readme '" + readmeFile + "' output error: " + e.getMessage());
+                        log("readme '" + readmeFile + "' output error: " + ((e != null) ? e.getMessage() : ""));
                     }
-                } catch (IOException e) {
-                    log(sm.getString("defaultServlet.readerCloseFailed"), e);
+                } catch (IOException ioe) {
+                    log(sm.getString("defaultServlet.readerCloseFailed"), ioe);
                 } finally {
                     if (reader != null) {
                         try {
                             reader.close();
-                        } catch (IOException e) {
+                        } catch (IOException ignore) {
                             // Ignore
                         }
                     }
@@ -2256,7 +2254,7 @@ public class DefaultServlet extends HttpServlet {
             WebResource resource) {
 
         String method = request.getMethod();
-        if (!"GET".equals(method) && !"HEAD".equals(method)) {
+        if (!Method.GET.equals(method) && !Method.HEAD.equals(method)) {
             return true;
         }
 
@@ -2364,7 +2362,7 @@ public class DefaultServlet extends HttpServlet {
             // 304 Not Modified.
             // For every other method, 412 Precondition Failed is sent
             // back.
-            if ("GET".equals(request.getMethod()) || "HEAD".equals(request.getMethod())) {
+            if (Method.GET.equals(request.getMethod()) || Method.HEAD.equals(request.getMethod())) {
                 response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
                 response.setHeader("ETag", resourceETag);
             } else {
@@ -2454,8 +2452,7 @@ public class DefaultServlet extends HttpServlet {
 
         if (headerValue.length() > 2 && (headerValue.charAt(0) == '"' || headerValue.charAt(2) == '"')) {
             boolean weakETag = headerValue.startsWith("W/\"");
-            if ((!weakETag && headerValue.charAt(0) != '"') ||
-                    headerValue.charAt(headerValue.length() - 1) != '"' ||
+            if ((!weakETag && headerValue.charAt(0) != '"') || headerValue.charAt(headerValue.length() - 1) != '"' ||
                     headerValue.indexOf('"', weakETag ? 3 : 1) != headerValue.length() - 1) {
                 // Not a single entity tag
                 response.sendError(HttpServletResponse.SC_BAD_REQUEST);
@@ -2468,7 +2465,7 @@ public class DefaultServlet extends HttpServlet {
             long headerValueTime = -1L;
             try {
                 headerValueTime = request.getDateHeader("If-Range");
-            } catch (IllegalArgumentException e) {
+            } catch (IllegalArgumentException ignore) {
                 // Ignore
             }
             if (headerValueTime >= 0) {
@@ -2669,8 +2666,8 @@ public class DefaultServlet extends HttpServlet {
                     break;
                 }
                 ostream.write(buffer, 0, len);
-            } catch (IOException e) {
-                exception = e;
+            } catch (IOException ioe) {
+                exception = ioe;
                 break;
             }
         }
@@ -2700,8 +2697,8 @@ public class DefaultServlet extends HttpServlet {
                     break;
                 }
                 writer.write(buffer, 0, len);
-            } catch (IOException e) {
-                exception = e;
+            } catch (IOException ioe) {
+                exception = ioe;
                 break;
             }
         }
@@ -2730,8 +2727,8 @@ public class DefaultServlet extends HttpServlet {
         long skipped;
         try {
             skipped = istream.skip(start);
-        } catch (IOException e) {
-            return e;
+        } catch (IOException ioe) {
+            return ioe;
         }
         if (skipped < start) {
             return new IOException(sm.getString("defaultServlet.skipfail", Long.valueOf(skipped), Long.valueOf(start)));
@@ -2752,8 +2749,8 @@ public class DefaultServlet extends HttpServlet {
                     ostream.write(buffer, 0, (int) bytesToRead);
                     bytesToRead = 0;
                 }
-            } catch (IOException e) {
-                exception = e;
+            } catch (IOException ioe) {
+                exception = ioe;
                 len = -1;
             }
         }

@@ -70,8 +70,6 @@ import org.apache.tomcat.util.res.StringManager;
  * value of the etag is not taken into consideration).
  * <p>
  * This class was contributed by Apache Jackrabbit
- *
- * @author Felix Meschberger
  */
 public class WebdavIfHeader {
 
@@ -227,8 +225,10 @@ public class WebdavIfHeader {
                     firstChar = readWhiteSpace(reader);
                     reader.reset();
                 } catch (IOException ignore) {
-                    // may be thrown according to API but is only thrown by the
-                    // StringReader class if the reader is already closed.
+                    /*
+                     * May be thrown according to API but is only thrown by the StringReader class if the reader is
+                     * already closed.
+                     */
                 }
 
                 if (firstChar == '(') {

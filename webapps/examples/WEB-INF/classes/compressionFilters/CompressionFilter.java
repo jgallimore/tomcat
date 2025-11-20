@@ -34,9 +34,6 @@ import jakarta.servlet.http.HttpServletResponse;
 /**
  * Implementation of <code>jakarta.servlet.Filter</code> used to compress
  * the ServletResponse if it is bigger than a threshold.
- *
- * @author Amy Roh
- * @author Dmitri Valdin
  */
 public class CompressionFilter extends GenericFilter {
 

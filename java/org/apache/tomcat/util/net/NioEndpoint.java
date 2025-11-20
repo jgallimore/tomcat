@@ -67,8 +67,6 @@ import org.apache.tomcat.util.net.jsse.JSSESupport;
 
 /**
  * NIO endpoint.
- *
- * @author Mladen Turk
  */
 public class NioEndpoint extends AbstractNetworkChannelEndpoint<NioChannel,SocketChannel> {
 
@@ -634,7 +632,7 @@ public class NioEndpoint extends AbstractNetworkChannelEndpoint<NioChannel,Socke
         }
 
         public int getKeyCount() {
-            return keyCount;
+            return selector.keys().size();
         }
 
         public Selector getSelector() {
@@ -710,8 +708,8 @@ public class NioEndpoint extends AbstractNetworkChannelEndpoint<NioChannel,Socke
                 } else if (interestOps == OP_REGISTER) {
                     try {
                         sc.register(getSelector(), SelectionKey.OP_READ, socketWrapper);
-                    } catch (Exception x) {
-                        log.error(sm.getString("endpoint.nio.registerFail"), x);
+                    } catch (Exception e) {
+                        log.error(sm.getString("endpoint.nio.registerFail"), e);
                     }
                 } else {
                     final SelectionKey key = sc.keyFor(getSelector());
@@ -930,6 +928,7 @@ public class NioEndpoint extends AbstractNetworkChannelEndpoint<NioChannel,Socke
                     try {
                         sd.fchannel.close();
                     } catch (Exception ignore) {
+                        // Ignore
                     }
                     // For calls from outside the Poller, the caller is
                     // responsible for registering the socket for the
@@ -973,9 +972,9 @@ public class NioEndpoint extends AbstractNetworkChannelEndpoint<NioChannel,Socke
                     }
                     return SendfileState.PENDING;
                 }
-            } catch (IOException e) {
+            } catch (IOException ioe) {
                 if (log.isDebugEnabled()) {
-                    log.debug(sm.getString("endpoint.sendfile.error"), e);
+                    log.debug(sm.getString("endpoint.sendfile.error"), ioe);
                 }
                 if (!calledByProcessor && sc != null) {
                     socketWrapper.close();
@@ -1259,10 +1258,10 @@ public class NioEndpoint extends AbstractNetworkChannelEndpoint<NioChannel,Socke
                         getSocket().free();
                     }
                 }
-            } catch (Throwable e) {
-                ExceptionUtils.handleThrowable(e);
+            } catch (Throwable t) {
+                ExceptionUtils.handleThrowable(t);
                 if (log.isDebugEnabled()) {
-                    log.error(sm.getString("endpoint.debug.channelCloseFail"), e);
+                    log.error(sm.getString("endpoint.debug.channelCloseFail"), t);
                 }
             } finally {
                 socketBufferHandler = SocketBufferHandler.EMPTY;
@@ -1274,10 +1273,10 @@ public class NioEndpoint extends AbstractNetworkChannelEndpoint<NioChannel,Socke
                 if (data != null && data.fchannel != null && data.fchannel.isOpen()) {
                     data.fchannel.close();
                 }
-            } catch (Throwable e) {
-                ExceptionUtils.handleThrowable(e);
+            } catch (Throwable t) {
+                ExceptionUtils.handleThrowable(t);
                 if (log.isDebugEnabled()) {
-                    log.error(sm.getString("endpoint.sendfile.closeError"), e);
+                    log.error(sm.getString("endpoint.sendfile.closeError"), t);
                 }
             }
         }
@@ -1324,8 +1323,11 @@ public class NioEndpoint extends AbstractNetworkChannelEndpoint<NioChannel,Socke
                                 } else {
                                     readLock.wait();
                                 }
-                            } catch (InterruptedException e) {
-                                // Continue
+                            } catch (InterruptedException ignore) {
+                                /*
+                                 * Most likely the Poller signalling there is data to read but could be spurious. Exit
+                                 * the wait, check status and proceed accordingly.
+                                 */
                             }
                         }
                     }
@@ -1431,8 +1433,11 @@ public class NioEndpoint extends AbstractNetworkChannelEndpoint<NioChannel,Socke
                                 } else {
                                     writeLock.wait();
                                 }
-                            } catch (InterruptedException e) {
-                                // Continue
+                            } catch (InterruptedException ignore) {
+                                /*
+                                 * Most likely the Poller signalling that data can be written but could be spurious.
+                                 * Exit the wait, check status and proceed accordingly.
+                                 */
                             }
                         } else if (startNanos > 0) {
                             // If something was written, reset timeout
@@ -1681,8 +1686,8 @@ public class NioEndpoint extends AbstractNetworkChannelEndpoint<NioChannel,Socke
                                 completionDone = false;
                             }
                         }
-                    } catch (IOException e) {
-                        setError(e);
+                    } catch (IOException ioe) {
+                        setError(ioe);
                     }
                 }
                 if (nBytes > 0 || (nBytes == 0 && !buffersArrayHasRemaining(buffers, offset, length) &&
@@ -1758,11 +1763,11 @@ public class NioEndpoint extends AbstractNetworkChannelEndpoint<NioChannel,Socke
                         // the handshake completes.
                         event = SocketEvent.OPEN_READ;
                     }
-                } catch (IOException x) {
+                } catch (IOException ioe) {
                     handshake = -1;
                     if (logHandshake.isDebugEnabled()) {
                         logHandshake.debug(sm.getString("endpoint.err.handshake", socketWrapper.getRemoteAddr(),
-                                Integer.toString(socketWrapper.getRemotePort())), x);
+                                Integer.toString(socketWrapper.getRemotePort())), ioe);
                     }
                 } catch (CancelledKeyException ckx) {
                     handshake = -1;
