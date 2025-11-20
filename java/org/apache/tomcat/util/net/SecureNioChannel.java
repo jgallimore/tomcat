@@ -209,7 +209,7 @@ public class SecureNioChannel extends NioChannel {
                     }
                     // fall down to NEED_UNWRAP on the same call, will result in a
                     // BUFFER_UNDERFLOW if it needs data
-                    //$FALL-THROUGH$
+                    // $FALL-THROUGH$
                 case NEED_UNWRAP:
                     // perform the unwrap function
                     handshake = handshakeUnwrap(read);
@@ -390,28 +390,29 @@ public class SecureNioChannel extends NioChannel {
                         isWritable = key.isWritable();
                 }
             }
-        } catch (IOException x) {
+        } catch (IOException ioe) {
             closeSilently();
-            throw x;
-        } catch (Exception cx) {
+            throw ioe;
+        } catch (Exception e) {
             closeSilently();
-            throw new IOException(cx);
+            throw new IOException(e);
         } finally {
             if (key != null) {
                 try {
                     key.cancel();
                 } catch (Exception ignore) {
+                    // Ignore
                 }
             }
             if (selector != null) {
                 try {
                     selector.close();
                 } catch (Exception ignore) {
+                    // Ignore
                 }
             }
         }
     }
-
 
     /**
      * Executes all the tasks needed on the same thread.
@@ -576,7 +577,9 @@ public class SecureNioChannel extends NioChannel {
         } catch (IOException ioe) {
             // This is expected - swallowing the exception is the reason this
             // method exists. Log at debug in case someone is interested.
-            log.debug(sm.getString("channel.nio.ssl.closeSilentError"), ioe);
+            if (log.isDebugEnabled()) {
+                log.debug(sm.getString("channel.nio.ssl.closeSilentError"), ioe);
+            }
         }
     }
 

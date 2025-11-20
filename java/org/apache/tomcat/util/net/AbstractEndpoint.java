@@ -396,12 +396,6 @@ public abstract class AbstractEndpoint<S, U> {
      */
     protected void createSSLContext(SSLHostConfig sslHostConfig) throws IllegalArgumentException {
 
-        // HTTP/2 does not permit optional certificate authentication with any
-        // version of TLS.
-        if (sslHostConfig.getCertificateVerification().isOptional() && negotiableProtocols.contains("h2")) {
-            getLog().warn(sm.getString("sslHostConfig.certificateVerificationWithHttp2", sslHostConfig.getHostName()));
-        }
-
         boolean firstCertificate = true;
         for (SSLHostConfigCertificate certificate : sslHostConfig.getCertificates(true)) {
             SSLUtil sslUtil = sslImplementation.getSSLUtil(certificate);
@@ -1264,8 +1258,8 @@ public abstract class AbstractEndpoint<S, U> {
             } else {
                 return IntrospectionUtils.setProperty(this, name, value, false);
             }
-        } catch (Exception x) {
-            getLog().error(sm.getString("endpoint.setAttributeError", name, value), x);
+        } catch (Exception e) {
+            getLog().error(sm.getString("endpoint.setAttributeError", name, value), e);
             return false;
         }
     }
@@ -1387,7 +1381,9 @@ public abstract class AbstractEndpoint<S, U> {
         try {
             localAddress = getLocalAddress();
         } catch (IOException ioe) {
-            getLog().debug(sm.getString("endpoint.debug.unlock.localFail", getName()), ioe);
+            if (getLog().isDebugEnabled()) {
+                getLog().debug(sm.getString("endpoint.debug.unlock.localFail", getName()), ioe);
+            }
         }
         if (localAddress == null) {
             getLog().warn(sm.getString("endpoint.debug.unlock.localNone", getName()));

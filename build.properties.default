@@ -31,7 +31,7 @@
 # ----- Version Control Flags -----
 version.major=11
 version.minor=0
-version.build=9
+version.build=12
 version.patch=0
 version.suffix=-TT.1
 version.dev=dev
@@ -146,15 +146,15 @@ base-maven.loc=https://repo.maven.apache.org/maven2
 # ----- Eclipse JDT, version 4.7 or later -----#
 # See https://cwiki.apache.org/confluence/display/TOMCAT/Managing+Tomcat%27s+Dependency+on+the+Eclipse+JDT+Core+Batch+Compiler
 #
-# Checksum is from "SHA512 Checksums for 4.35" link at
-# https://download.eclipse.org/eclipse/downloads/drops4/R-4.35-202502280140/
-# https://download.eclipse.org/eclipse/downloads/drops4/R-4.35-202502280140/checksum/eclipse-4.35-SUMSSHA512
+# Checksum is from "SHA512 Checksums for 4.36" link at
+# https://download.eclipse.org/eclipse/downloads/drops4/R-4.36-202505281830/
+# https://download.eclipse.org/eclipse/downloads/drops4/R-4.36-202505281830/checksum/eclipse-4.36-SUMSSHA512
 #
-jdt.version=4.35
-jdt.release=R-4.35-202502280140
+jdt.version=4.36
+jdt.release=R-4.36-202505281830
 jdt.checksum.enabled=true
 jdt.checksum.algorithm=SHA-512
-jdt.checksum.value=f79cadd22cc0b2c9ce8d7cd168280b98835caa24dd6b8c14aab06ce67fe2048c161c6f4b38df686783e64aeb4953cbb0886fea6e3abffad99aa62f1aa80e6d40
+jdt.checksum.value=4f0da140e5c447717e5111bd4bf6e6e9a4431f1db2c67deaf37b13f4ec0f6314d8d799a8a3da19859028c5ff6bcf32ac417228697941c590ce3f0f89ab3a30fc
 jdt.home=${base.path}/ecj-${jdt.version}
 jdt.jar=${jdt.home}/ecj-${jdt.version}.jar
 # The download will be moved to the archive area eventually. We are taking care of that in advance.
@@ -265,19 +265,19 @@ bytebuddy.jar=${bytebuddy.home}/byte-buddy-${bytebuddy.version}.jar
 bytebuddy.loc=${base-maven.loc}/net/bytebuddy/byte-buddy/${bytebuddy.version}/byte-buddy-${bytebuddy.version}.jar
 
 # ----- UnboundID, used by unit tests, version 5.1.4 or later -----
-unboundid.version=7.0.2
+unboundid.version=7.0.3
 unboundid.checksum.enabled=true
 unboundid.checksum.algorithm=SHA-512
-unboundid.checksum.value=425a003273c8fb3ddcefae8273b322dae2186ccb48344c55e8a4a8251915ef0c595cd69566c3ef33476c3151bcd5b20a3492b2917c4959a83e30ca363cbce88e
+unboundid.checksum.value=25fef7f28e06bedfa54672370e0e4cfb5ef8041f1bd5abf2826ad022e5131bf1d3791314888a939f3fe25edbc28d28afffdd7125cfae16876ead0bf50c68351a
 unboundid.home=${base.path}/unboundid-${unboundid.version}
 unboundid.jar=${unboundid.home}/unboundid-ldapsdk-${unboundid.version}.jar
 unboundid.loc=${base-maven.loc}/com/unboundid/unboundid-ldapsdk/${unboundid.version}/unboundid-ldapsdk-${unboundid.version}.jar
 
 # ----- Checkstyle, version 6.16 or later -----
-checkstyle.version=10.25.0
+checkstyle.version=11.0.0
 checkstyle.checksum.enabled=true
 checkstyle.checksum.algorithm=SHA-512
-checkstyle.checksum.value=2feb76596316bc9b6821747cc6409bdb3bcd1251262152b9cff165133b6b1d9910083ef79d7240b9bbd907cd174366f2a17645c319e18d06e32a700cc8780757
+checkstyle.checksum.value=c0697ffb4df9fd661dcf0ce2e909bcf5d1be2806be97fa9c6604a55078ba14956c56c40e32b412eda98a03c6b0a888a42cc357cdc8a4db808629a42612d8f991
 checkstyle.home=${base.path}/checkstyle-${checkstyle.version}
 checkstyle.jar=${checkstyle.home}/checkstyle-${checkstyle.version}-all.jar
 checkstyle.loc=${base-gh.loc}/checkstyle/checkstyle/releases/download/checkstyle-${checkstyle.version}/checkstyle-${checkstyle.version}-all.jar

@@ -627,9 +627,11 @@ public class PoolProperties implements PoolConfiguration, Cloneable, Serializabl
                 }
             }
             buf.append(']');
-        }catch (Exception x) {
+        } catch (Exception x) {
             //shouldn't happen
-            log.debug("toString() call failed", x);
+            if (log.isDebugEnabled()) {
+                log.debug("toString() call failed", x);
+            }
         }
         return buf.toString();
     }
@@ -939,8 +941,8 @@ public class PoolProperties implements PoolConfiguration, Cloneable, Serializabl
         if (propText != null) {
             try {
                 props.load(new ByteArrayInputStream(propText.replace(';', '\n').getBytes()));
-            }catch (IOException x) {
-                throw new RuntimeException(x);
+            }catch (IOException ioe) {
+                throw new RuntimeException(ioe);
             }
         }
         return props;

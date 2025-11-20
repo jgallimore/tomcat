@@ -376,9 +376,9 @@ public class ReplicationValve extends ValveBase implements ClusterValve {
             if (isCrossContext) {
                 sendCrossContextSession();
             }
-        } catch (Exception x) {
+        } catch (Exception e) {
             // FIXME we have a lot of sends, but the trouble with one node stops the correct replication to other nodes!
-            log.error(sm.getString("ReplicationValve.send.failure"), x);
+            log.error(sm.getString("ReplicationValve.send.failure"), e);
         } finally {
             if (doStatistics()) {
                 updateStats(totalstart, start, isAsync);
@@ -505,8 +505,8 @@ public class ReplicationValve extends ValveBase implements ClusterValve {
         for (String invalidId : invalidIds) {
             try {
                 send(manager, invalidId);
-            } catch (Exception x) {
-                log.error(sm.getString("ReplicationValve.send.invalid.failure", invalidId), x);
+            } catch (Exception e) {
+                log.error(sm.getString("ReplicationValve.send.invalid.failure", invalidId), e);
             }
         }
     }
@@ -544,8 +544,7 @@ public class ReplicationValve extends ValveBase implements ClusterValve {
                             Long.valueOf(totalSendTime.longValue() / nrOfRequests.longValue()),
                             Long.valueOf(nrOfRequests.longValue()), Long.valueOf(nrOfSendRequests.longValue()),
                             Long.valueOf(nrOfCrossContextSendRequests.longValue()),
-                            Long.valueOf(nrOfFilterRequests.longValue()),
-                            Long.valueOf(totalRequestTime.longValue()),
+                            Long.valueOf(nrOfFilterRequests.longValue()), Long.valueOf(totalRequestTime.longValue()),
                             Long.valueOf(totalSendTime.longValue())));
                 }
             }

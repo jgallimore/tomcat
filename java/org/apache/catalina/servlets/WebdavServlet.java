@@ -680,6 +680,10 @@ public class WebdavServlet extends DefaultServlet implements PeriodicEventListen
                 if (hrefs.hasNext()) {
                     currentHref = hrefs.next();
                     currentPath = getPathFromHref(currentHref, request);
+                    if (currentPath == null) {
+                        // The path was invalid
+                        return false;
+                    }
                     currentWebResource = resources.getResource(currentPath);
                 } else {
                     break;
@@ -836,7 +840,7 @@ public class WebdavServlet extends DefaultServlet implements PeriodicEventListen
         try (InputStream is = req.getInputStream(); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
             IOTools.flow(is, os);
             body = os.toByteArray();
-        } catch (IOException e) {
+        } catch (IOException ioe) {
             resp.sendError(WebdavStatus.SC_BAD_REQUEST);
             return;
         }
@@ -1037,7 +1041,7 @@ public class WebdavServlet extends DefaultServlet implements PeriodicEventListen
         try (InputStream is = req.getInputStream(); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
             IOTools.flow(is, os);
             body = os.toByteArray();
-        } catch (IOException e) {
+        } catch (IOException ioe) {
             resp.sendError(WebdavStatus.SC_BAD_REQUEST);
             return;
         }
@@ -1391,7 +1395,7 @@ public class WebdavServlet extends DefaultServlet implements PeriodicEventListen
         try (InputStream is = req.getInputStream(); ByteArrayOutputStream os = new ByteArrayOutputStream()) {
             IOTools.flow(is, os);
             body = os.toByteArray();
-        } catch (IOException e) {
+        } catch (IOException ioe) {
             resp.sendError(WebdavStatus.SC_BAD_REQUEST);
             return;
         }
@@ -1841,7 +1845,7 @@ public class WebdavServlet extends DefaultServlet implements PeriodicEventListen
         if (!allowSpecialPaths) {
             String upperCasePath = path.toUpperCase(Locale.ENGLISH);
             return upperCasePath.startsWith("/WEB-INF/") || upperCasePath.startsWith("/META-INF/") ||
-                upperCasePath.equals("/WEB-INF") || upperCasePath.equals("/META-INF");
+                    upperCasePath.equals("/WEB-INF") || upperCasePath.equals("/META-INF");
         }
         return false;
     }
@@ -1969,7 +1973,7 @@ public class WebdavServlet extends DefaultServlet implements PeriodicEventListen
                     if (parentPath == path || parentLock.depth > 0) {
                         if (parentLock.isExclusive()) {
                             return !ifHeader.contains(":" + parentLock.token + ">") ||
-                                (parentLock.principal != null && !parentLock.principal.equals(principal));
+                                    (parentLock.principal != null && !parentLock.principal.equals(principal));
                         } else {
                             for (String token : parentLock.sharedTokens) {
                                 LockInfo lock = sharedLocks.get(token);
@@ -2254,8 +2258,8 @@ public class WebdavServlet extends DefaultServlet implements PeriodicEventListen
                 } else {
                     store.copy(source, dest);
                 }
-            } catch (IOException e) {
-                log(sm.getString("webdavservlet.inputstreamclosefail", source), e);
+            } catch (IOException ioe) {
+                log(sm.getString("webdavservlet.inputstreamclosefail", source), ioe);
             }
         } else {
             errorList.put(source, Integer.valueOf(WebdavStatus.SC_INTERNAL_SERVER_ERROR));
@@ -2746,8 +2750,8 @@ public class WebdavServlet extends DefaultServlet implements PeriodicEventListen
 
     private static boolean propertyEquals(Node node1, Node node2) {
         return node1.getLocalName().equals(node2.getLocalName()) &&
-            ((node1.getNamespaceURI() == null && node2.getNamespaceURI() == null) ||
-                (node1.getNamespaceURI() != null && node1.getNamespaceURI().equals(node2.getNamespaceURI())));
+                ((node1.getNamespaceURI() == null && node2.getNamespaceURI() == null) ||
+                        (node1.getNamespaceURI() != null && node1.getNamespaceURI().equals(node2.getNamespaceURI())));
     }
 
 

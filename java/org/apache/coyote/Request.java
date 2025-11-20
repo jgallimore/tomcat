@@ -72,8 +72,8 @@ public final class Request {
      * another 3,000,000 years before it gets back to zero).
      *
      * Local testing shows that 5, 10, 50, 500 or 1000 threads can obtain 60,000,000+ IDs a second from a single
-     * AtomicLong. That is about 17ns per request. It does not appear that the introduction of this counter will
-     * cause a bottleneck for request processing.
+     * AtomicLong. That is about 17ns per request. It does not appear that the introduction of this counter will cause a
+     * bottleneck for request processing.
      */
     private static final AtomicLong requestIdGenerator = new AtomicLong(0);
 
@@ -141,7 +141,7 @@ public final class Request {
      */
     private long contentLength = -1;
     private MessageBytes contentTypeMB = null;
-    private CharsetHolder charsetHolder = CharsetHolder.EMPTY;
+    private CharsetHolder charsetHolder = null;
 
     /**
      * Is there an expectation ?
@@ -443,7 +443,7 @@ public final class Request {
 
 
     public CharsetHolder getCharsetHolder() {
-        if (charsetHolder.getName() == null) {
+        if (charsetHolder == null) {
             charsetHolder = CharsetHolder.getInstance(getCharsetFromContentType(getContentType()));
         }
         return charsetHolder;
@@ -451,7 +451,11 @@ public final class Request {
 
 
     public void setCharsetHolder(CharsetHolder charsetHolder) {
-        this.charsetHolder = charsetHolder;
+        if (charsetHolder == null || charsetHolder.getName() == null) {
+            this.charsetHolder = null;
+        } else {
+            this.charsetHolder = charsetHolder;
+        }
     }
 
 
@@ -778,7 +782,7 @@ public final class Request {
 
         contentLength = -1;
         contentTypeMB = null;
-        charsetHolder = CharsetHolder.EMPTY;
+        charsetHolder = null;
         expectation = false;
         headers.recycle();
         trailerFields.recycle();
@@ -879,7 +883,7 @@ public final class Request {
         MediaType mediaType = null;
         try {
             mediaType = MediaType.parseMediaType(new StringReader(contentType));
-        } catch (IOException e) {
+        } catch (IOException ioe) {
             // Ignore - null test below handles this
         }
         if (mediaType != null) {

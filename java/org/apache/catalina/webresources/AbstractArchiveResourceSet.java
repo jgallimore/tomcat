@@ -31,17 +31,21 @@ import java.util.zip.ZipFile;
 import org.apache.catalina.WebResource;
 import org.apache.catalina.WebResourceRoot;
 import org.apache.catalina.util.ResourceSet;
+import org.apache.juli.logging.Log;
+import org.apache.juli.logging.LogFactory;
 
 public abstract class AbstractArchiveResourceSet extends AbstractResourceSet {
 
+    private static final Log log = LogFactory.getLog(AbstractArchiveResourceSet.class);
+
     private URL baseUrl;
     private String baseUrlString;
-    private JarFile archive = null;
+    protected JarFile archive = null;
     protected Map<String,JarEntry> archiveEntries = null;
     protected final Object archiveLock = new Object();
-    private long archiveUseCount = 0;
-    private JarContents jarContents;
-    private boolean retainBloomFilterForArchives = false;
+    protected long archiveUseCount = 0;
+    protected JarContents jarContents;
+    protected boolean retainBloomFilterForArchives = false;
 
     protected final void setBaseUrl(URL baseUrl) {
         this.baseUrl = baseUrl;
@@ -340,8 +344,8 @@ public abstract class AbstractArchiveResourceSet extends AbstractResourceSet {
             if (archive != null && archiveUseCount == 0) {
                 try {
                     archive.close();
-                } catch (IOException e) {
-                    // Log at least WARN
+                } catch (IOException ioe) {
+                    log.warn(sm.getString("abstractArchiveResourceSet.archiveCloseFailed"), ioe);
                 }
                 archive = null;
                 archiveEntries = null;

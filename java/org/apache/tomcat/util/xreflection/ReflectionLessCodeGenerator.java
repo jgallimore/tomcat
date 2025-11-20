@@ -33,13 +33,10 @@ final class ReflectionLessCodeGenerator {
         return indent;
     }
 
-    static void generateCode(
-        File directory,
-        String className,
-        String packageName,
-        Set<SetPropertyClass> baseClasses
-    ) throws IOException {
-        //begin - class
+    static void generateCode(File directory, String className, String packageName, Set<SetPropertyClass> baseClasses)
+            throws IOException {
+        //@formatter:off
+        // begin - class
         StringBuilder code = new StringBuilder(AL20_HEADER)
             .append("package ")
             .append(packageName)
@@ -52,7 +49,7 @@ final class ReflectionLessCodeGenerator {
             .append(System.lineSeparator())
             .append(System.lineSeparator());
 
-        //begin - isEnabled method
+        // begin - isEnabled method
         code.append(getIndent(1))
             .append("static boolean isEnabled() {")
             .append(System.lineSeparator())
@@ -64,9 +61,9 @@ final class ReflectionLessCodeGenerator {
             .append(System.lineSeparator())
             .append(System.lineSeparator())
         ;
-        //end - isEnabled method
+        // end - isEnabled method
 
-        //begin - getInetAddress method
+        // begin - getInetAddress method
         code.append(getIndent(1))
             .append("private static java.net.InetAddress getInetAddress(String value) {")
             .append(System.lineSeparator())
@@ -84,9 +81,9 @@ final class ReflectionLessCodeGenerator {
             .append(System.lineSeparator())
             .append(System.lineSeparator())
             ;
-        //end - getInetAddress method
+        // end - getInetAddress method
 
-        //begin - getPropertyInternal method
+        // begin - getPropertyInternal method
         code.append(getIndent(1))
             .append("static Object getPropertyInternal(Object ")
             .append(SetPropertyClass.OBJECT_VAR_NAME)
@@ -107,7 +104,7 @@ final class ReflectionLessCodeGenerator {
             .append("switch (checkThisClass.getName()) {")
             .append(System.lineSeparator());
 
-        //generate case statements for getPropertyInternal
+        // generate case statements for getPropertyInternal
         generateCaseStatementsForGetPropertyInternal(baseClasses, code);
 
 
@@ -127,13 +124,13 @@ final class ReflectionLessCodeGenerator {
             .append(getIndent(1))
             .append('}')
             .append(System.lineSeparator());
-        //end - getPropertyInternal method
+        // end - getPropertyInternal method
 
-        //begin - getPropertyForXXX methods
+        // begin - getPropertyForXXX methods
         generateGetPropertyForMethods(baseClasses, code);
-        //end - getPropertyForXXX methods
+        // end - getPropertyForXXX methods
 
-        //begin - setPropertyInternal method
+        // begin - setPropertyInternal method
         code.append(getIndent(1))
             .append("static boolean setPropertyInternal(Object ")
             .append(SetPropertyClass.OBJECT_VAR_NAME)
@@ -155,7 +152,7 @@ final class ReflectionLessCodeGenerator {
             .append("switch (checkThisClass.getName()) {")
             .append(System.lineSeparator());
 
-        //generate case statements for setPropertyInternal
+        // generate case statements for setPropertyInternal
         generateCaseStatementsForSetPropertyInternal(baseClasses, code);
 
 
@@ -175,16 +172,17 @@ final class ReflectionLessCodeGenerator {
             .append(getIndent(1))
             .append('}')
             .append(System.lineSeparator());
-        //end - setPropertyInternal method
+        // end - setPropertyInternal method
 
-        //begin - setPropertyForXXX methods
+        // begin - setPropertyForXXX methods
         generateSetPropertyForMethods(baseClasses, code);
-        //end - setPropertyForXXX methods
+        // end - setPropertyForXXX methods
 
         code.append('}')
             .append(System.lineSeparator());
-        //end - class
-        File destination = new File(directory, className+".java");
+        // end - class
+        //@formatter:on
+        File destination = new File(directory, className + ".java");
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(destination, false))) {
             writer.write(code.toString());
             writer.flush();
@@ -201,7 +199,8 @@ final class ReflectionLessCodeGenerator {
         }
     }
 
-    private static void generateCaseStatementsForSetPropertyInternal(Set<SetPropertyClass> baseClasses, StringBuilder code) {
+    private static void generateCaseStatementsForSetPropertyInternal(Set<SetPropertyClass> baseClasses,
+            StringBuilder code) {
         for (SetPropertyClass clazz : baseClasses) {
             generateCaseStatementForSetPropertyInternal(clazz, code);
         }
@@ -211,9 +210,7 @@ final class ReflectionLessCodeGenerator {
         for (SetPropertyClass child : clazz.getChildren()) {
             generateSetPropertyForMethod(child, code);
         }
-        code.append(clazz.generateSetPropertyForMethod())
-            .append(System.lineSeparator())
-            .append(System.lineSeparator());
+        code.append(clazz.generateSetPropertyForMethod()).append(System.lineSeparator()).append(System.lineSeparator());
     }
 
     private static void generateSetPropertyForMethods(Set<SetPropertyClass> baseClasses, StringBuilder code) {
@@ -221,7 +218,6 @@ final class ReflectionLessCodeGenerator {
             generateSetPropertyForMethod(clazz, code);
         }
     }
-
 
 
     private static void generateCaseStatementForGetPropertyInternal(SetPropertyClass clazz, StringBuilder code) {
@@ -233,7 +229,8 @@ final class ReflectionLessCodeGenerator {
         }
     }
 
-    private static void generateCaseStatementsForGetPropertyInternal(Set<SetPropertyClass> baseClasses, StringBuilder code) {
+    private static void generateCaseStatementsForGetPropertyInternal(Set<SetPropertyClass> baseClasses,
+            StringBuilder code) {
         for (SetPropertyClass clazz : baseClasses) {
             generateCaseStatementForGetPropertyInternal(clazz, code);
         }
@@ -243,9 +240,7 @@ final class ReflectionLessCodeGenerator {
         for (SetPropertyClass child : clazz.getChildren()) {
             generateGetPropertyForMethod(child, code);
         }
-        code.append(clazz.generateGetPropertyForMethod())
-            .append(System.lineSeparator())
-            .append(System.lineSeparator());
+        code.append(clazz.generateGetPropertyForMethod()).append(System.lineSeparator()).append(System.lineSeparator());
     }
 
     private static void generateGetPropertyForMethods(Set<SetPropertyClass> baseClasses, StringBuilder code) {

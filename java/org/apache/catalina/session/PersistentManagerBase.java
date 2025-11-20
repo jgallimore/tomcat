@@ -217,8 +217,8 @@ public abstract class PersistentManagerBase extends ManagerBase implements Store
             if (super.findSession(id) != null) {
                 return true;
             }
-        } catch (IOException e) {
-            log.error(sm.getString("persistentManager.isLoadedError", id), e);
+        } catch (IOException ioe) {
+            log.error(sm.getString("persistentManager.isLoadedError", id), ioe);
         }
         return false;
     }
@@ -295,8 +295,8 @@ public abstract class PersistentManagerBase extends ManagerBase implements Store
 
         try {
             store.clear();
-        } catch (IOException e) {
-            log.error(sm.getString("persistentManager.storeClearError"), e);
+        } catch (IOException ioe) {
+            log.error(sm.getString("persistentManager.storeClearError"), ioe);
         }
 
     }
@@ -411,8 +411,8 @@ public abstract class PersistentManagerBase extends ManagerBase implements Store
         String[] ids;
         try {
             ids = store.keys();
-        } catch (IOException e) {
-            log.error(sm.getString("persistentManager.storeLoadKeysError"), e);
+        } catch (IOException ioe) {
+            log.error(sm.getString("persistentManager.storeLoadKeysError"), ioe);
             return;
         }
 
@@ -428,8 +428,8 @@ public abstract class PersistentManagerBase extends ManagerBase implements Store
         for (String id : ids) {
             try {
                 swapIn(id);
-            } catch (IOException e) {
-                log.error(sm.getString("persistentManager.storeLoadError"), e);
+            } catch (IOException ioe) {
+                log.error(sm.getString("persistentManager.storeLoadError"), ioe);
             }
         }
 
@@ -460,8 +460,8 @@ public abstract class PersistentManagerBase extends ManagerBase implements Store
     protected void removeSession(String id) {
         try {
             store.remove(id);
-        } catch (IOException e) {
-            log.error(sm.getString("persistentManager.removeError"), e);
+        } catch (IOException ioe) {
+            log.error(sm.getString("persistentManager.removeError"), ioe);
         }
     }
 
@@ -492,7 +492,7 @@ public abstract class PersistentManagerBase extends ManagerBase implements Store
         for (Session session : sessions) {
             try {
                 swapOut(session);
-            } catch (IOException e) {
+            } catch (IOException ignore) {
                 // This is logged in writeSession()
             }
         }
@@ -508,7 +508,7 @@ public abstract class PersistentManagerBase extends ManagerBase implements Store
             // Store session count
             result += getStore().getSize();
         } catch (IOException ioe) {
-            log.warn(sm.getString("persistentManager.storeSizeException"));
+            log.warn(sm.getString("persistentManager.storeSizeException"), ioe);
         }
         return result;
     }
@@ -521,8 +521,8 @@ public abstract class PersistentManagerBase extends ManagerBase implements Store
         try {
             // Store session ID list
             sessionIds.addAll(Arrays.asList(getStore().keys()));
-        } catch (IOException e) {
-            log.warn(sm.getString("persistentManager.storeKeysException"));
+        } catch (IOException ioe) {
+            log.warn(sm.getString("persistentManager.storeKeysException"), ioe);
         }
         return sessionIds;
     }
@@ -665,9 +665,9 @@ public abstract class PersistentManagerBase extends ManagerBase implements Store
 
         try {
             store.save(session);
-        } catch (IOException e) {
-            log.error(sm.getString("persistentManager.serializeError", session.getIdInternal(), e));
-            throw e;
+        } catch (IOException ioe) {
+            log.error(sm.getString("persistentManager.serializeError", session.getIdInternal()), ioe);
+            throw ioe;
         }
 
     }
@@ -768,7 +768,7 @@ public abstract class PersistentManagerBase extends ManagerBase implements Store
                         }
                         try {
                             swapOut(session);
-                        } catch (IOException e) {
+                        } catch (IOException ignore) {
                             // This is logged in writeSession()
                         }
                     }
@@ -818,7 +818,7 @@ public abstract class PersistentManagerBase extends ManagerBase implements Store
                     }
                     try {
                         swapOut(session);
-                    } catch (IOException e) {
+                    } catch (IOException ignore) {
                         // This is logged in writeSession()
                     }
                     toswap--;
@@ -863,7 +863,7 @@ public abstract class PersistentManagerBase extends ManagerBase implements Store
 
                         try {
                             writeSession(session);
-                        } catch (IOException e) {
+                        } catch (IOException ignore) {
                             // This is logged in writeSession()
                         }
                         session.setNote(PERSISTED_LAST_ACCESSED_TIME, Long.valueOf(lastAccessedTime));

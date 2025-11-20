@@ -300,11 +300,11 @@ public class Http11Processor extends AbstractProcessor {
                         socketWrapper.setReadTimeout(protocol.getConnectionUploadTimeout());
                     }
                 }
-            } catch (IOException e) {
+            } catch (IOException ioe) {
                 if (log.isDebugEnabled()) {
-                    log.debug(sm.getString("http11processor.header.parse"), e);
+                    log.debug(sm.getString("http11processor.header.parse"), ioe);
                 }
-                setErrorState(ErrorState.CLOSE_CONNECTION_NOW, e);
+                setErrorState(ErrorState.CLOSE_CONNECTION_NOW, ioe);
                 break;
             } catch (Throwable t) {
                 ExceptionUtils.handleThrowable(t);
@@ -574,7 +574,7 @@ public class Http11Processor extends AbstractProcessor {
         long contentLength = -1;
         try {
             contentLength = request.getContentLengthLong();
-        } catch (Exception e) {
+        } catch (Exception ignore) {
             // Ignore, an error here is already processed in prepareRequest
             // but is done again since the content length is still -1
         }
@@ -746,7 +746,7 @@ public class Http11Processor extends AbstractProcessor {
                     try {
                         hostValueMB = headers.setValue("host");
                         hostValueMB.setBytes(uriB, uriBCStart + pos, slashPos - pos);
-                    } catch (IllegalStateException e) {
+                    } catch (IllegalStateException ignore) {
                         // Edge case
                         // If the request has too many headers it won't be
                         // possible to create the host header. Ignore this as
@@ -1150,6 +1150,8 @@ public class Http11Processor extends AbstractProcessor {
             endRequest();
             inputBuffer.nextRequest();
             outputBuffer.nextRequest();
+            // Set keep alive timeout for next request
+            socketWrapper.setReadTimeout(protocol.getKeepAliveTimeout());
             if (socketWrapper.isReadPending()) {
                 return SocketState.LONG;
             } else {
@@ -1192,8 +1194,8 @@ public class Http11Processor extends AbstractProcessor {
         if (getErrorState().isIoAllowed()) {
             try {
                 inputBuffer.endRequest();
-            } catch (IOException e) {
-                setErrorState(ErrorState.CLOSE_CONNECTION_NOW, e);
+            } catch (IOException ioe) {
+                setErrorState(ErrorState.CLOSE_CONNECTION_NOW, ioe);
             } catch (Throwable t) {
                 ExceptionUtils.handleThrowable(t);
                 // 500 - Internal Server Error
@@ -1208,8 +1210,8 @@ public class Http11Processor extends AbstractProcessor {
             try {
                 action(ActionCode.COMMIT, null);
                 outputBuffer.end();
-            } catch (IOException e) {
-                setErrorState(ErrorState.CLOSE_CONNECTION_NOW, e);
+            } catch (IOException ioe) {
+                setErrorState(ErrorState.CLOSE_CONNECTION_NOW, ioe);
             } catch (Throwable t) {
                 ExceptionUtils.handleThrowable(t);
                 setErrorState(ErrorState.CLOSE_NOW, t);
@@ -1237,8 +1239,8 @@ public class Http11Processor extends AbstractProcessor {
             if (!response.isCommitted() && request.hasExpectation()) {
                 try {
                     outputBuffer.sendAck();
-                } catch (IOException e) {
-                    setErrorState(ErrorState.CLOSE_CONNECTION_NOW, e);
+                } catch (IOException ioe) {
+                    setErrorState(ErrorState.CLOSE_CONNECTION_NOW, ioe);
                 }
             }
         }
