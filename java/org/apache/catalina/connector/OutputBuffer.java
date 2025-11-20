@@ -33,14 +33,12 @@ import org.apache.coyote.CloseNowException;
 import org.apache.coyote.Response;
 import org.apache.tomcat.util.buf.C2BConverter;
 import org.apache.tomcat.util.buf.CharsetHolder;
+import org.apache.tomcat.util.http.Method;
 import org.apache.tomcat.util.res.StringManager;
 
 /**
  * The buffer used by Tomcat response. This is a derivative of the Tomcat 3.3 OutputBuffer, with the removal of some of
  * the state handling (which in Coyote is mostly the Processor's responsibility).
- *
- * @author Costin Manolache
- * @author Remy Maucherat
  */
 public class OutputBuffer extends Writer {
 
@@ -226,8 +224,8 @@ public class OutputBuffer extends Writer {
         // - the content length has not been explicitly set
         // AND
         // - some content has been written OR this is NOT a HEAD request
-        if ((!coyoteResponse.isCommitted()) && (coyoteResponse.getContentLengthLong() == -1) &&
-                ((bb.remaining() > 0 || !coyoteResponse.getRequest().method().equals("HEAD")))) {
+        if (!coyoteResponse.isCommitted() && coyoteResponse.getContentLengthLong() == -1 &&
+                (bb.remaining() > 0 || !Method.HEAD.equals(coyoteResponse.getRequest().getMethod()))) {
             coyoteResponse.setContentLength(bb.remaining());
         }
 

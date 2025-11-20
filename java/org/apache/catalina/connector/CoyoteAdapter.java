@@ -49,6 +49,7 @@ import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.buf.CharChunk;
 import org.apache.tomcat.util.buf.HexUtils;
 import org.apache.tomcat.util.buf.MessageBytes;
+import org.apache.tomcat.util.http.Method;
 import org.apache.tomcat.util.http.ServerCookie;
 import org.apache.tomcat.util.http.ServerCookies;
 import org.apache.tomcat.util.net.SSLSupport;
@@ -58,9 +59,6 @@ import org.apache.tomcat.util.res.StringManager;
 
 /**
  * Implementation of a request processor which delegates the processing to a Coyote processor.
- *
- * @author Craig R. McClanahan
- * @author Remy Maucherat
  */
 public class CoyoteAdapter implements Adapter {
 
@@ -592,7 +590,7 @@ public class CoyoteAdapter implements Adapter {
 
         // Check for ping OPTIONS * request
         if (undecodedURI.equals("*")) {
-            if (req.method().equals("OPTIONS")) {
+            if (Method.OPTIONS.equals(req.getMethod())) {
                 StringBuilder allow = new StringBuilder();
                 allow.append("GET, HEAD, POST, PUT, DELETE, OPTIONS");
                 // Trace if allowed
@@ -611,7 +609,7 @@ public class CoyoteAdapter implements Adapter {
         MessageBytes decodedURI = req.decodedURI();
 
         // Filter CONNECT method
-        if (req.method().equals("CONNECT")) {
+        if (Method.CONNECT.equals(req.getMethod())) {
             response.sendError(HttpServletResponse.SC_NOT_IMPLEMENTED, sm.getString("coyoteAdapter.connect"));
         } else {
             // No URI for CONNECT requests
@@ -810,14 +808,14 @@ public class CoyoteAdapter implements Adapter {
         }
 
         // Filter TRACE method
-        if (!connector.getAllowTrace() && req.method().equals("TRACE")) {
+        if (!connector.getAllowTrace() && Method.TRACE.equals(req.getMethod())) {
             Wrapper wrapper = request.getWrapper();
             StringBuilder header = null;
             if (wrapper != null) {
                 String[] methods = wrapper.getServletMethods();
                 if (methods != null) {
                     for (String method : methods) {
-                        if ("TRACE".equals(method)) {
+                        if (Method.TRACE.equals(method)) {
                             continue;
                         }
                         if (header == null) {

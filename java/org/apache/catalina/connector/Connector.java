@@ -28,7 +28,6 @@ import javax.management.ObjectName;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.LifecycleState;
 import org.apache.catalina.Service;
-import org.apache.catalina.core.AprStatus;
 import org.apache.catalina.util.LifecycleMBeanBase;
 import org.apache.coyote.AbstractProtocol;
 import org.apache.coyote.Adapter;
@@ -37,12 +36,14 @@ import org.apache.coyote.UpgradeProtocol;
 import org.apache.coyote.http11.AbstractHttp11Protocol;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
+import org.apache.tomcat.jni.AprStatus;
 import org.apache.tomcat.util.IntrospectionUtils;
 import org.apache.tomcat.util.buf.B2CConverter;
 import org.apache.tomcat.util.buf.CharsetUtil;
 import org.apache.tomcat.util.buf.EncodedSolidusHandling;
 import org.apache.tomcat.util.buf.StringUtils;
 import org.apache.tomcat.util.compat.JreCompat;
+import org.apache.tomcat.util.http.Method;
 import org.apache.tomcat.util.net.SSLHostConfig;
 import org.apache.tomcat.util.net.openssl.OpenSSLImplementation;
 import org.apache.tomcat.util.net.openssl.OpenSSLStatus;
@@ -51,9 +52,6 @@ import org.apache.tomcat.util.res.StringManager;
 
 /**
  * Implementation of a Coyote connector.
- *
- * @author Craig R. McClanahan
- * @author Remy Maucherat
  */
 public class Connector extends LifecycleMBeanBase {
 
@@ -229,7 +227,7 @@ public class Connector extends LifecycleMBeanBase {
      * Comma-separated list of HTTP methods that will be parsed according to POST-style rules for
      * application/x-www-form-urlencoded request bodies.
      */
-    protected String parseBodyMethods = "POST";
+    protected String parseBodyMethods = Method.POST;
 
     /**
      * A Set of methods determined by {@link #parseBodyMethods}.
@@ -562,7 +560,7 @@ public class Connector extends LifecycleMBeanBase {
             methodSet.addAll(Arrays.asList(StringUtils.splitCommaSeparated(methods)));
         }
 
-        if (methodSet.contains("TRACE")) {
+        if (methodSet.contains(Method.TRACE)) {
             throw new IllegalArgumentException(sm.getString("coyoteConnector.parseBodyMethodNoTrace"));
         }
 

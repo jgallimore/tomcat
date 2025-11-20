@@ -28,6 +28,7 @@ import jakarta.servlet.http.Cookie;
 import org.apache.catalina.Container;
 import org.apache.catalina.Context;
 import org.apache.catalina.Engine;
+import org.apache.catalina.Host;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.Manager;
 import org.apache.catalina.Realm;
@@ -50,8 +51,6 @@ import org.apache.tomcat.util.res.StringManager;
  * <li>The web applications themselves must use one of the standard Authenticators found in the
  * <code>org.apache.catalina.authenticator</code> package.</li>
  * </ul>
- *
- * @author Craig R. McClanahan
  */
 public class SingleSignOn extends ValveBase {
 
@@ -571,12 +570,39 @@ public class SingleSignOn extends ValveBase {
 
     @Override
     protected void startInternal() throws LifecycleException {
-        Container c = getContainer();
-        while (c != null && !(c instanceof Engine)) {
-            c = c.getParent();
+        Container container = getContainer();
+        while (container != null && !(container instanceof Engine)) {
+            container = container.getParent();
         }
-        if (c != null) {
-            engine = (Engine) c;
+        if (container != null) {
+            engine = (Engine) container;
+        }
+        // Starting with the associated container, verify it has a realm associated,
+        // and that no child container returns a different realm
+        container = getContainer();
+        Realm containerRealm = container.getRealm();
+        if (containerRealm == null) {
+            containerLog.warn(sm.getString("singleSignOn.noRealm", container.getName()));
+        } else {
+            if (container instanceof Engine) {
+                for (Container host : engine.findChildren()) {
+                    if (host.getRealm() != containerRealm) {
+                        containerLog.warn(sm.getString("singleSignOn.duplicateRealm", host.getName()));
+                    } else {
+                        for (Container context : host.findChildren()) {
+                            if (context.getRealm() != containerRealm) {
+                                containerLog.warn(sm.getString("singleSignOn.duplicateRealm", context.getName()));
+                            }
+                        }
+                    }
+                }
+            } else if (container instanceof Host) {
+                for (Container context : container.findChildren()) {
+                    if (context.getRealm() != containerRealm) {
+                        containerLog.warn(sm.getString("singleSignOn.duplicateRealm", context.getName()));
+                    }
+                }
+            }
         }
         super.startInternal();
     }
@@ -586,5 +612,28 @@ public class SingleSignOn extends ValveBase {
     protected void stopInternal() throws LifecycleException {
         super.stopInternal();
         engine = null;
+    }
+
+    protected void sessionChangedId(String ssoId, Session session, String oldSessionId) {
+        if (containerLog.isDebugEnabled()) {
+            containerLog.debug(sm.getString("singleSignOn.debug.sessionChangedId", session, oldSessionId, ssoId));
+        }
+
+        SingleSignOnEntry entry = cache.get(ssoId);
+        if (entry == null) {
+            return;
+        }
+
+        /*
+         * Associate the new sessionId with this SingleSignOnEntry. A SessionListener will be registered for the new
+         * sessionID. If not, then we would not notice any subsequent Session.SESSION_DESTROYED_EVENT for the session.
+         */
+        entry.addSession(this, ssoId, session);
+
+        /*
+         * Remove the obsolete sessionId from the SingleSignOnEntry. The sessionId part of the SingleSignOnSessionKey is
+         * final.
+         */
+        entry.removeSession(session, oldSessionId);
     }
 }

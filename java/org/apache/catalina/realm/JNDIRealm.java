@@ -135,9 +135,6 @@ import org.ietf.jgss.GSSName;
  * descriptor allows applications to refer to roles programmatically by names other than those used in the directory
  * server itself.</li>
  * </ul>
- *
- * @author John Holman
- * @author Craig R. McClanahan
  */
 public class JNDIRealm extends RealmBase {
 
@@ -2566,8 +2563,8 @@ public class JNDIRealm extends RealmBase {
     private SSLSocketFactory createSSLSocketFactoryFromClassName(String className) {
         try {
             Object o = constructInstance(className);
-            if (o instanceof SSLSocketFactory) {
-                return sslSocketFactory;
+            if (o instanceof SSLSocketFactory socketFactory) {
+                return socketFactory;
             } else {
                 throw new IllegalArgumentException(sm.getString("jndiRealm.invalidSslSocketFactory", className));
             }

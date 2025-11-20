@@ -86,11 +86,6 @@ import org.xml.sax.SAXException;
  *           webXmlFragment="${build.dir}/generated_web.xml"
  *           outputDir="${webapp.dir}/${webapp.name}/WEB-INF/src/my/package" /&gt;
  * </pre>
- *
- * @author Danno Ferrin
- * @author Pierre Delisle
- * @author Costin Manolache
- * @author Yoav Shapira
  */
 public class JspC extends Task implements Options {
 

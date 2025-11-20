@@ -42,6 +42,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.apache.catalina.AccessLog;
 import org.apache.catalina.Globals;
+import org.apache.catalina.util.NetMaskSet;
 import org.apache.catalina.util.RequestUtil;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
@@ -93,7 +94,7 @@ import org.apache.tomcat.util.res.StringManager;
  * <table border="1">
  * <caption>Configuration parameters</caption>
  * <tr>
- * <th>XForwardedFilter property</th>
+ * <th>RemoteIpFilter property</th>
  * <th>Description</th>
  * <th>Equivalent mod_remoteip directive</th>
  * <th>Format</th>
@@ -109,18 +110,12 @@ import org.apache.tomcat.util.res.StringManager;
  * </tr>
  * <tr>
  * <td>internalProxies</td>
- * <td>Regular expression that matches the IP addresses of internal proxies. If they appear in the
- * <code>remoteIpHeader</code> value, they will be trusted and will not appear in the <code>proxiesHeader</code>
- * value</td>
+ * <td>Either a comma separated list of CIDR blocks or a single regular expression that matches the IP addresses of
+ * internal proxies. If they appear in the <code>remoteIpHeader</code> value, they will be trusted and will not appear
+ * in the <code>proxiesHeader</code> value</td>
  * <td>RemoteIPInternalProxy</td>
- * <td>Regular expression (in the syntax supported by {@link java.util.regex.Pattern java.util.regex})</td>
- * <td>10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|
- * 169\.254\.\d{1,3}\.\d{1,3}|127\.\d{1,3}\.\d{1,3}\.\d{1,3}|
- * 100\.6[4-9]{1}\.\d{1,3}\.\d{1,3}|100\.[7-9]{1}\d{1}\.\d{1,3}\.\d{1,3}|
- * 100\.1[0-1]{1}\d{1}\.\d{1,3}\.\d{1,3}|100\.12[0-7]{1}\.\d{1,3}\.\d{1,3}|
- * 172\.1[6-9]{1}\.\d{1,3}\.\d{1,3}|172\.2[0-9]{1}\.\d{1,3}\.\d{1,3}| 172\.3[0-1]{1}\.\d{1,3}\.\d{1,3}|
- * 0:0:0:0:0:0:0:1|::1 <br>
- * By default, 10/8, 192.168/16, 169.254/16, 127/8, 100.64/10, 172.16/12, and 0:0:0:0:0:0:0:1 are allowed.</td>
+ * <td>Comma separated list of CIDR blocks or a single regular expression {@link Pattern}</td>
+ * <td>10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,169.254.0.0/16,100.64.0.0/10,127.0.0.0/8,::1/128,fe80::/10,fc00::/7</td>
  * </tr>
  * <tr>
  * <td>proxiesHeader</td>
@@ -132,10 +127,11 @@ import org.apache.tomcat.util.res.StringManager;
  * </tr>
  * <tr>
  * <td>trustedProxies</td>
- * <td>Regular expression that matches the IP addresses of trusted proxies. If they appear in the
- * <code>remoteIpHeader</code> value, they will be trusted and will appear in the <code>proxiesHeader</code> value</td>
+ * <td>Either a comma separated list of CIDR blocks or a single regular expression that matches the IP addresses of
+ * internal proxies. If they appear in the <code>remoteIpHeader</code> value, they will be trusted and will appear in
+ * the <code>proxiesHeader</code> value</td>
  * <td>RemoteIPTrustedProxy</td>
- * <td>Regular expression (in the syntax supported by {@link java.util.regex.Pattern java.util.regex})</td>
+ * <td>Comma separated list of CIDR blocks or a single regular expression {@link Pattern}</td>
  * <td>&nbsp;</td>
  * </tr>
  * <tr>
@@ -177,19 +173,12 @@ import org.apache.tomcat.util.res.StringManager;
  * <td>false</td>
  * </tr>
  * </table>
- * <p>
- * <strong>Regular expression vs. IP address blocks:</strong> <code>mod_remoteip</code> allows to use address blocks
- * (e.g. <code>192.168/16</code>) to configure <code>RemoteIPInternalProxy</code> and <code>RemoteIPTrustedProxy</code>
- * ; as the JVM doesn't have a library similar to <a href=
- * "https://apr.apache.org/docs/apr/1.3/group__apr__network__io.html#gb74d21b8898b7c40bf7fd07ad3eb993d">apr_ipsubnet_test</a>,
- * we rely on regular expressions.
- * </p>
  * <hr>
  * <p>
  * <strong>Sample with internal proxies</strong>
  * </p>
  * <p>
- * XForwardedFilter configuration:
+ * RemoteIpFilter configuration:
  * </p>
  *
  * <pre>
@@ -198,7 +187,7 @@ import org.apache.tomcat.util.res.StringManager;
  *    &lt;filter-class&gt;org.apache.catalina.filters.RemoteIpFilter&lt;/filter-class&gt;
  *    &lt;init-param&gt;
  *       &lt;param-name&gt;internalProxies&lt;/param-name&gt;
- *       &lt;param-value&gt;192\.168\.0\.10|192\.168\.0\.11&lt;/param-value&gt;
+ *       &lt;param-value&gt;192.168.0.10/31&lt;/param-value&gt;
  *    &lt;/init-param&gt;
  *    &lt;init-param&gt;
  *       &lt;param-name&gt;remoteIpHeader&lt;/param-name&gt;
@@ -279,7 +268,7 @@ import org.apache.tomcat.util.res.StringManager;
  *    &lt;filter-class&gt;org.apache.catalina.filters.RemoteIpFilter&lt;/filter-class&gt;
  *    &lt;init-param&gt;
  *       &lt;param-name&gt;internalProxies&lt;/param-name&gt;
- *       &lt;param-value&gt;192\.168\.0\.10|192\.168\.0\.11&lt;/param-value&gt;
+ *       &lt;param-value&gt;192.168.0.10/31&lt;/param-value&gt;
  *    &lt;/init-param&gt;
  *    &lt;init-param&gt;
  *       &lt;param-name&gt;remoteIpHeader&lt;/param-name&gt;
@@ -343,7 +332,7 @@ import org.apache.tomcat.util.res.StringManager;
  *    &lt;filter-class&gt;org.apache.catalina.filters.RemoteIpFilter&lt;/filter-class&gt;
  *    &lt;init-param&gt;
  *       &lt;param-name&gt;internalProxies&lt;/param-name&gt;
- *       &lt;param-value&gt;192\.168\.0\.10|192\.168\.0\.11&lt;/param-value&gt;
+ *       &lt;param-value&gt;192.168.0.10/31&lt;/param-value&gt;
  *    &lt;/init-param&gt;
  *    &lt;init-param&gt;
  *       &lt;param-name&gt;remoteIpHeader&lt;/param-name&gt;
@@ -408,7 +397,7 @@ import org.apache.tomcat.util.res.StringManager;
  *    &lt;filter-class&gt;org.apache.catalina.filters.RemoteIpFilter&lt;/filter-class&gt;
  *    &lt;init-param&gt;
  *       &lt;param-name&gt;internalProxies&lt;/param-name&gt;
- *       &lt;param-value&gt;192\.168\.0\.10|192\.168\.0\.11&lt;/param-value&gt;
+ *       &lt;param-value&gt;192.168.0.10/31&lt;/param-value&gt;
  *    &lt;/init-param&gt;
  *    &lt;init-param&gt;
  *       &lt;param-name&gt;remoteIpHeader&lt;/param-name&gt;
@@ -681,30 +670,16 @@ public class RemoteIpFilter extends GenericFilter {
 
     protected static final String ENABLE_LOOKUPS_PARAMETER = "enableLookups";
 
-    /**
-     * @see #setHttpServerPort(int)
-     */
     private int httpServerPort = 80;
 
-    /**
-     * @see #setHttpsServerPort(int)
-     */
     private int httpsServerPort = 443;
 
-    /**
-     * @see #setInternalProxies(String)
-     */
-    private Pattern internalProxies = Pattern.compile("10\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}|" +
-            "192\\.168\\.\\d{1,3}\\.\\d{1,3}|" + "169\\.254\\.\\d{1,3}\\.\\d{1,3}|" +
-            "127\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}|" + "100\\.6[4-9]{1}\\.\\d{1,3}\\.\\d{1,3}|" +
-            "100\\.[7-9]{1}\\d{1}\\.\\d{1,3}\\.\\d{1,3}|" + "100\\.1[0-1]{1}\\d{1}\\.\\d{1,3}\\.\\d{1,3}|" +
-            "100\\.12[0-7]{1}\\.\\d{1,3}\\.\\d{1,3}|" + "172\\.1[6-9]{1}\\.\\d{1,3}\\.\\d{1,3}|" +
-            "172\\.2[0-9]{1}\\.\\d{1,3}\\.\\d{1,3}|" + "172\\.3[0-1]{1}\\.\\d{1,3}\\.\\d{1,3}|" +
-            "0:0:0:0:0:0:0:1|::1|" + "fe[89ab]\\p{XDigit}:.*|" + "f[cd]\\p{XDigit}{2}+:.*");
+    private Pattern internalProxiesRegex = null;
 
-    /**
-     * @see #setProtocolHeader(String)
-     */
+    private NetMaskSet internalProxiesCidr =
+            NetMaskSet.parse("10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,169.254.0.0/16,100.64.0.0/10,127.0.0.0/8," +
+                    "::1/128,fe80::/10,fc00::/7");
+
     private String protocolHeader = "X-Forwarded-Proto";
 
     private String protocolHeaderHttpsValue = "https";
@@ -717,34 +692,25 @@ public class RemoteIpFilter extends GenericFilter {
 
     private boolean changeLocalPort = false;
 
-    /**
-     * @see #setProxiesHeader(String)
-     */
     private String proxiesHeader = "X-Forwarded-By";
 
-    /**
-     * @see #setRemoteIpHeader(String)
-     */
     private String remoteIpHeader = "X-Forwarded-For";
 
-    /**
-     * @see #setRequestAttributesEnabled(boolean)
-     */
     private boolean requestAttributesEnabled = true;
 
-    /**
-     * @see #setTrustedProxies(String)
-     */
-    private Pattern trustedProxies = null;
+    private Pattern trustedProxiesRegex = null;
+
+    private NetMaskSet trustedProxiesCidr = null;
 
     private boolean enableLookups;
+
 
     public void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws IOException, ServletException {
 
-        boolean isInternal = internalProxies != null && internalProxies.matcher(request.getRemoteAddr()).matches();
+        boolean isInternal = isInternalProxy(request.getRemoteAddr());
 
-        if (isInternal || (trustedProxies != null && trustedProxies.matcher(request.getRemoteAddr()).matches())) {
+        if (isInternal || isTrustedProxy(request.getRemoteAddr())) {
             String remoteIp = null;
             Deque<String> proxiesHeaderValue = new ArrayDeque<>();
             StringBuilder concatRemoteIpHeaderValue = new StringBuilder();
@@ -766,9 +732,10 @@ public class RemoteIpFilter extends GenericFilter {
             for (idx = remoteIpHeaderValue.length - 1; idx >= 0; idx--) {
                 String currentRemoteIp = remoteIpHeaderValue[idx];
                 remoteIp = currentRemoteIp;
-                if (internalProxies != null && internalProxies.matcher(currentRemoteIp).matches()) {
+
+                if (isInternalProxy(currentRemoteIp)) {
                     // do nothing, internalProxies IPs are not appended to the
-                } else if (trustedProxies != null && trustedProxies.matcher(currentRemoteIp).matches()) {
+                } else if (isTrustedProxy(currentRemoteIp)) {
                     proxiesHeaderValue.addFirst(currentRemoteIp);
                 } else {
                     idx--; // decrement idx because break statement doesn't do it
@@ -884,6 +851,47 @@ public class RemoteIpFilter extends GenericFilter {
 
     }
 
+    /**
+     * Checks if the given IP address is from an internal proxy.
+     *
+     * @param remoteIp The IP address to check
+     *
+     * @return {@code true} if the IP address is from an internal proxy, otherwise {@code false}
+     */
+    private boolean isInternalProxy(String remoteIp) {
+        if (internalProxiesRegex != null && internalProxiesRegex.matcher(remoteIp).matches()) {
+            return true;
+        }
+        return checkIsCidr(internalProxiesCidr, remoteIp);
+    }
+
+    /**
+     * Checks if the given IP address is from a trusted proxy.
+     *
+     * @param remoteIp The IP address to check
+     *
+     * @return {@code true} if the IP address is from a trusted proxy, otherwise {@code false}
+     */
+    private boolean isTrustedProxy(String remoteIp) {
+        if (trustedProxiesRegex != null && trustedProxiesRegex.matcher(remoteIp).matches()) {
+            return true;
+        }
+
+        return checkIsCidr(trustedProxiesCidr, remoteIp);
+    }
+
+    private boolean checkIsCidr(NetMaskSet netMaskSet, String remoteIp) {
+        if (netMaskSet == null) {
+            return false;
+        }
+        try {
+            return netMaskSet.contains(remoteIp);
+        } catch (UnknownHostException uhe) {
+            log.debug(sm.getString("remoteIpFilter.invalidRemoteAddress", remoteIp), uhe);
+        }
+        return false;
+    }
+
     /*
      * Considers the value to be secure if it exclusively holds forwards for {@link #protocolHeaderHttpsValue}.
      */
@@ -947,8 +955,36 @@ public class RemoteIpFilter extends GenericFilter {
         return httpsServerPort;
     }
 
+    /**
+     * Obtain the currently configured regular expression Pattern for internal proxies.
+     *
+     * @return The currently configured regular expression Pattern for internal proxies
+     *
+     * @deprecated The implementation of this method will be replaced with the implementation of
+     *                 {@link #getInternalProxiesAsString()} in Tomcat 12 onwards with the return type changing to
+     *                 {@code String}
+     */
+    @Deprecated
     public Pattern getInternalProxies() {
-        return internalProxies;
+        return internalProxiesRegex;
+    }
+
+    /**
+     * Obtain the currently configured internal proxies.
+     *
+     * @return The currently configured internal proxies.
+     *
+     * @deprecated This method will be renamed to {@code getInternalProxies()} as of Tomcat 12
+     */
+    @Deprecated
+    public String getInternalProxiesAsString() {
+        if (internalProxiesCidr != null) {
+            return internalProxiesCidr.toString();
+        } else if (internalProxiesRegex != null) {
+            return internalProxiesRegex.toString();
+        } else {
+            return null;
+        }
     }
 
     public String getProtocolHeader() {
@@ -980,8 +1016,36 @@ public class RemoteIpFilter extends GenericFilter {
         return requestAttributesEnabled;
     }
 
+    /**
+     * Obtain the currently configured regular expression Pattern for trusted proxies.
+     *
+     * @return The currently configured regular expression Pattern for trusted proxies
+     *
+     * @deprecated The implementation of this method will be replaced with the implementation of
+     *                 {@link #getTrustedProxiesAsString()} in Tomcat 12 onwards with the return type changing to
+     *                 {@code String}
+     */
+    @Deprecated
     public Pattern getTrustedProxies() {
-        return trustedProxies;
+        return trustedProxiesRegex;
+    }
+
+    /**
+     * Obtain the currently configured trusted proxies.
+     *
+     * @return The currently configured trusted proxies.
+     *
+     * @deprecated This method will be renamed to {@code getInternalProxies()} as of Tomcat 12
+     */
+    @Deprecated
+    public String getTrustedProxiesAsString() {
+        if (trustedProxiesCidr != null) {
+            return trustedProxiesCidr.toString();
+        } else if (trustedProxiesRegex != null) {
+            return trustedProxiesRegex.toString();
+        } else {
+            return null;
+        }
     }
 
     public boolean getEnableLookups() {
@@ -1115,21 +1179,20 @@ public class RemoteIpFilter extends GenericFilter {
     }
 
     /**
-     * <p>
-     * Regular expression that defines the internal proxies.
-     * </p>
-     * <p>
-     * Default value :
-     * 10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|169\.254.\d{1,3}.\d{1,3}|127\.\d{1,3}\.\d{1,3}\.\d{1,3}|0:0:0:0:0:0:0:1
-     * </p>
+     * Set the internal proxies either as a comma separated list of CIDR blocks or a single regular expression.
      *
-     * @param internalProxies The regexp
+     * @param internalProxies The new internal proxies
      */
     public void setInternalProxies(String internalProxies) {
         if (internalProxies == null || internalProxies.isEmpty()) {
-            this.internalProxies = null;
+            this.internalProxiesRegex = null;
+            this.internalProxiesCidr = null;
+        } else if (internalProxies.indexOf('/') > 0) {
+            this.internalProxiesRegex = null;
+            this.internalProxiesCidr = NetMaskSet.parse(internalProxies);
         } else {
-            this.internalProxies = Pattern.compile(internalProxies);
+            this.internalProxiesRegex = Pattern.compile(internalProxies);
+            this.internalProxiesCidr = null;
         }
     }
 
@@ -1251,20 +1314,20 @@ public class RemoteIpFilter extends GenericFilter {
     }
 
     /**
-     * <p>
-     * Regular expression defining proxies that are trusted when they appear in the {@link #remoteIpHeader} header.
-     * </p>
-     * <p>
-     * Default value : empty list, no external proxy is trusted.
-     * </p>
+     * Set the trusted proxies either as a comma separated list of CIDR blocks or a single regular expression.
      *
-     * @param trustedProxies The trusted proxies regexp
+     * @param trustedProxies The new trusted proxies
      */
     public void setTrustedProxies(String trustedProxies) {
         if (trustedProxies == null || trustedProxies.isEmpty()) {
-            this.trustedProxies = null;
+            this.trustedProxiesRegex = null;
+            this.trustedProxiesCidr = null;
+        } else if (trustedProxies.indexOf('/') > 0) {
+            this.trustedProxiesRegex = null;
+            this.trustedProxiesCidr = NetMaskSet.parse(trustedProxies);
         } else {
-            this.trustedProxies = Pattern.compile(trustedProxies);
+            this.trustedProxiesCidr = null;
+            this.trustedProxiesRegex = Pattern.compile(trustedProxies);
         }
     }
 

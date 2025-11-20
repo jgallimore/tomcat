@@ -26,13 +26,7 @@ import org.apache.catalina.util.IOTools;
 import org.apache.tomcat.util.res.StringManager;
 
 /**
- * Implements the Server-side #exec command
- *
- * @author Bip Thelin
- * @author Amy Roh
- * @author Paul Speed
- * @author Dan Sandberg
- * @author David Becker
+ * Implements the Server-side #exec command.
  */
 public class SSIExec implements SSICommand {
     private static final StringManager sm = StringManager.getManager(SSIExec.class);

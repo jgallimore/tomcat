@@ -31,6 +31,7 @@ import javax.net.ssl.X509KeyManager;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
+import org.apache.tomcat.util.net.openssl.ciphers.SignatureScheme;
 import org.apache.tomcat.util.res.StringManager;
 
 public class SSLHostConfigCertificate implements Serializable {
@@ -85,7 +86,7 @@ public class SSLHostConfigCertificate implements Serializable {
     private StoreType storeType = null;
 
     public SSLHostConfigCertificate() {
-        this(null, Type.UNDEFINED);
+        this(null, DEFAULT_TYPE);
     }
 
     public SSLHostConfigCertificate(SSLHostConfig sslHostConfig, Type type) {
@@ -318,12 +319,19 @@ public class SSLHostConfigCertificate implements Serializable {
 
         UNDEFINED,
         RSA(Authentication.RSA),
-        DSA(Authentication.DSS),
-        EC(Authentication.ECDH, Authentication.ECDSA);
+        DSA(Authentication.DSS, Authentication.EdDSA),
+        EC(Authentication.ECDH, Authentication.ECDSA),
+        MLDSA("ML-DSA", Authentication.MLDSA);
 
+        private final String keyType;
         private final Set<Authentication> compatibleAuthentications;
 
         Type(Authentication... authentications) {
+            this(null, authentications);
+        }
+
+        Type(String keyType, Authentication... authentications) {
+            this.keyType = keyType;
             compatibleAuthentications = new HashSet<>();
             if (authentications != null) {
                 compatibleAuthentications.addAll(Arrays.asList(authentications));
@@ -333,6 +341,18 @@ public class SSLHostConfigCertificate implements Serializable {
         public boolean isCompatibleWith(Authentication au) {
             return compatibleAuthentications.contains(au);
         }
+
+        public boolean isCompatibleWith(SignatureScheme scheme) {
+            return compatibleAuthentications.contains(scheme.getAuth());
+        }
+
+        public String getKeyType() {
+            if (keyType != null) {
+                return keyType;
+            }
+            return super.toString();
+        }
+
     }
 
     enum StoreType {

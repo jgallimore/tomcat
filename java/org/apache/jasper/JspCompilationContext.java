@@ -46,12 +46,6 @@ import org.apache.tomcat.util.descriptor.tld.TldResourcePath;
  * A placeholder for various things that are used throughout the JSP engine. This is a per-request/per-context data
  * structure. Some of the instance variables are set at different points. Most of the path-related stuff is here -
  * mangling names, versions, dirs, loading resources and dealing with uris.
- *
- * @author Anil K. Vijendran
- * @author Harish Prabandham
- * @author Pierre Delisle
- * @author Costin Manolache
- * @author Kin-man Chung
  */
 public class JspCompilationContext {
 

@@ -24,7 +24,7 @@
 version.dev=
 
 # Ensure consistent timestamps for reproducible builds.
-ant.tstamp.now.iso=2025-09-01T10:24:44Z
+ant.tstamp.now.iso=2025-11-05T19:03:02Z
 
 # Enable insertion of detached signatures into the Windows installer.
 do.codesigning=true
@@ -41,7 +41,7 @@ gpg.exec=C:/Program Files (x86)/GnuPG/bin/gpg.exe
 #
 # Java Name:       OpenJDK 64-Bit Server VM
 # Java Vendor:     Eclipse Adoptium
-# Java Version:    24.0.2+12
+# Java Version:    25.0.1+8-LTS
 
 # The following is provided for information only. Builds will be repeatable
 # whether or not the build environment is consistent with this information.
@@ -50,6 +50,5 @@ gpg.exec=C:/Program Files (x86)/GnuPG/bin/gpg.exe
 # File encoding:   UTF-8
 #
 # Release Manager: markt
-# Downgraded from ant 1.10.15 to 1.10.15: cesar
-release-java-version=23.0.2+7
-release-ant-version=1.10.14
+release-java-version=25.0.1+8-LTS
+release-ant-version=1.10.15

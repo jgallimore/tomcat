@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLEngine;
@@ -46,6 +47,7 @@ import javax.net.ssl.X509TrustManager;
 
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
+import org.apache.tomcat.jni.AprStatus;
 import org.apache.tomcat.jni.Pool;
 import org.apache.tomcat.jni.SSL;
 import org.apache.tomcat.jni.SSLConf;
@@ -336,18 +338,7 @@ public class OpenSSLContext implements org.apache.tomcat.util.net.SSLContext {
             if (tms != null) {
                 // Client certificate verification based on custom trust managers
                 x509TrustManager = chooseTrustManager(tms);
-                SSLContext.setCertVerifyCallback(state.ctx, (ssl, chain, auth) -> {
-                    X509Certificate[] peerCerts = certificates(chain);
-                    try {
-                        x509TrustManager.checkClientTrusted(peerCerts, auth);
-                        return true;
-                    } catch (Exception e) {
-                        if (log.isDebugEnabled()) {
-                            log.debug(sm.getString("openssl.certificateVerificationFailed"), e);
-                        }
-                    }
-                    return false;
-                });
+                SSLContext.setCertVerifyCallback(state.ctx, new OpenSSLCertificateVerifier(x509TrustManager));
                 // Pass along the DER encoded certificates of the accepted client
                 // certificate issuers, so that their subjects can be presented
                 // by the server during the handshake to allow the client choosing
@@ -494,7 +485,7 @@ public class OpenSSLContext implements org.apache.tomcat.util.net.SSLContext {
             result = SSL.SSL_AIDX_RSA;
         } else if (certificate.getType() == Type.EC) {
             result = SSL.SSL_AIDX_ECC;
-        } else if (certificate.getType() == Type.DSA) {
+        } else if (certificate.getType() == Type.DSA || certificate.getType() == Type.MLDSA) {
             result = SSL.SSL_AIDX_DSA;
         } else {
             result = SSL.SSL_AIDX_MAX;
@@ -523,7 +514,7 @@ public class OpenSSLContext implements org.apache.tomcat.util.net.SSLContext {
 
         Iterator<Type> iter = candidateTypes.iterator();
         while (result == null && iter.hasNext()) {
-            result = keyManager.chooseServerAlias(iter.next().toString(), null, null);
+            result = keyManager.chooseServerAlias(iter.next().getKeyType(), null, null);
         }
 
         return result;
@@ -536,14 +527,6 @@ public class OpenSSLContext implements org.apache.tomcat.util.net.SSLContext {
             }
         }
         throw new IllegalStateException(sm.getString("openssl.trustManagerMissing"));
-    }
-
-    private static X509Certificate[] certificates(byte[][] chain) {
-        X509Certificate[] peerCerts = new X509Certificate[chain.length];
-        for (int i = 0; i < peerCerts.length; i++) {
-            peerCerts[i] = new OpenSSLX509Certificate(chain[i]);
-        }
-        return peerCerts;
     }
 
 
@@ -611,14 +594,33 @@ public class OpenSSLContext implements org.apache.tomcat.util.net.SSLContext {
     private record OpenSSLState(long aprPool, long cctx, long ctx) implements Runnable {
         @Override
         public void run() {
-            if (ctx != 0) {
-                SSLContext.free(ctx);
-            }
-            if (cctx != 0) {
-                SSLConf.free(cctx);
-            }
-            if (aprPool != 0) {
-                Pool.destroy(aprPool);
+            /*
+             * During shutdown there is a possibility that both the cleaner and the APR library termination code try and
+             * free these resources. If both call free, there will be a JVM crash.
+             *
+             * If the cleaner frees the resources, the APR library termination won't try free them as well.
+             *
+             * If the APR library termination frees the resources, the cleaner MUST NOT attempt to do so.
+             *
+             * The locks and checks below ensure that a) the cleaner only runs if the APR library has not yet been
+             * terminated and that the APR library status will not change while the cleaner is running.
+             */
+            Lock readLock = AprStatus.getStatusLock().readLock();
+            readLock.lock();
+            try {
+                if (AprStatus.isAprInitialized()) {
+                    if (ctx != 0) {
+                        SSLContext.free(ctx);
+                    }
+                    if (cctx != 0) {
+                        SSLConf.free(cctx);
+                    }
+                    if (aprPool != 0) {
+                        Pool.destroy(aprPool);
+                    }
+                }
+            } finally {
+                readLock.unlock();
             }
         }
     }

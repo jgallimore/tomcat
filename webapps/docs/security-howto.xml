@@ -169,7 +169,7 @@
        <li>Do not remove the use of the <a
            href="config/realm.html#LockOut_Realm_-_org.apache.catalina.realm.LockOutRealm">LockOutRealm</a>
            which prevents brute force attacks against user passwords.</li>
-       <li>Configure the <a href="config/valve.html#Remote_Address_Valve">RemoteAddrValve</a>
+       <li>Configure the <a href="config/valve.html#Remote_CIDR_Valve">RemoteCIDRValve</a>
            in the <a href="config/context.html">context.xml</a> file for the
            management application which limits access to localhost by default.
            If remote access is required, limit it to specific IP addresses using
@@ -189,6 +189,11 @@
     limited in scope (e.g. via security constraints) such that users with access
     to the functionality are unable to imapct the security of either the web
     application or the Tomcat instance on which it is running.</p>
+
+    <p>Consider using the
+    <a href="config/filter.html#CORS_Filter">CORS filter</a> and/or the
+    <a href="config/filter.html#CSRF_Prevention_Filter">CSRF prevention
+    filter</a> with deployed web applications.</p>
   </section>
 
   <section name="Security manager">
@@ -286,9 +291,9 @@
       parts are rejected.</p>
 
       <p>The <strong>maxPostSize</strong> attribute controls the maximum size
-      of a POST request that will be parsed for parameters. The parameters are
-      cached for the duration of the request so this is limited to 2 MiB by
-      default to reduce exposure to a DoS attack.</p>
+      of data from a POST request that will be parsed for request parameters.
+      The parameters are cached for the duration of the request so this is
+      limited to 2 MiB by default to reduce exposure to a DoS attack.</p>
 
       <p>The <strong>maxSavePostSize</strong> attribute controls the saving of
       the request body during FORM and CLIENT-CERT authentication and HTTP/1.1
@@ -426,7 +431,7 @@
       context as required.</p>
 
       <p>Any administrative application should be protected by a
-      RemoteAddrValve (this Valve is also available as a Filter).
+      RemoteCIDRValve (this Valve is also available as a Filter).
       The <strong>allow</strong> attribute should be used to limit access to a
       set of known trusted hosts.</p>
 
@@ -572,7 +577,9 @@
 
     <p>The WebDAV servlet enables edit functionality for web application
     content. If the WebDAV servlet is enabled, the WebDAV functionality should
-    be appropriately secured.</p>
+    be appropriately secured. This should include CORS protection if it is
+    expected that any legitimate users will access the web application via a
+    browser.</p>
 
     <p>When configuring security constraints, care should be taken if the URL
     pattern for one or more constraints covers any segment of the URL that

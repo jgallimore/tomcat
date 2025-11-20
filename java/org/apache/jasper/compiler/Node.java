@@ -42,13 +42,7 @@ import org.xml.sax.Attributes;
 /**
  * An internal data representation of a JSP page or a JSP document (XML). Also included here is a visitor class for
  * traversing nodes.
- *
- * @author Kin-man Chung
- * @author Jan Luehe
- * @author Shawn Bayern
- * @author Mark Roth
  */
-
 public abstract class Node implements TagConstants {
 
     private static final VariableInfo[] ZERO_VARIABLE_INFO = {};

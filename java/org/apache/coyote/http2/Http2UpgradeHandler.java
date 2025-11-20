@@ -584,6 +584,7 @@ class Http2UpgradeHandler extends AbstractStream implements InternalHttpUpgradeH
                     se.getError(), se.getMessage()));
         }
 
+        // Treat a sent reset like a received reset and increment the overhead count
         increaseOverheadCount(FrameType.RST, getProtocol().getOverheadResetFactor());
 
         // Write a RST frame
@@ -1865,7 +1866,7 @@ class Http2UpgradeHandler extends AbstractStream implements InternalHttpUpgradeH
         // 10 seconds
         protected final long pingIntervalNano = 10000000000L;
 
-        protected int sequence = 0;
+        protected volatile int sequence = 0;
         protected long lastPingNanoTime = Long.MIN_VALUE;
 
         protected Queue<PingRecord> inflightPings = new ConcurrentLinkedQueue<>();
@@ -1886,18 +1887,13 @@ class Http2UpgradeHandler extends AbstractStream implements InternalHttpUpgradeH
             if (force || now - lastPingNanoTime > pingIntervalNano) {
                 lastPingNanoTime = now;
                 byte[] payload = new byte[8];
-                socketWrapper.getLock().lock();
-                try {
-                    int sentSequence = ++sequence;
-                    PingRecord pingRecord = new PingRecord(sentSequence, now);
-                    inflightPings.add(pingRecord);
-                    ByteUtil.set31Bits(payload, 4, sentSequence);
-                    socketWrapper.write(true, PING, 0, PING.length);
-                    socketWrapper.write(true, payload, 0, payload.length);
-                    socketWrapper.flush(true);
-                } finally {
-                    socketWrapper.getLock().unlock();
-                }
+                int sentSequence = ++sequence;
+                PingRecord pingRecord = new PingRecord(sentSequence, now);
+                inflightPings.add(pingRecord);
+                ByteUtil.set31Bits(payload, 4, sentSequence);
+                socketWrapper.write(true, PING, 0, PING.length);
+                socketWrapper.write(true, payload, 0, payload.length);
+                socketWrapper.flush(true);
             }
         }
 

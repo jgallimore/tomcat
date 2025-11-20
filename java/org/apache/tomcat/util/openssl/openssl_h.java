@@ -226,6 +226,26 @@ public class openssl_h {
         return X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN;
     }
 
+    private static final int X509_V_ERR_CERT_REVOKED = (int) 23L;
+
+    /**
+     * {@snippet lang = c : * #define X509_V_ERR_CERT_REVOKED 23
+     * }
+     */
+    public static int X509_V_ERR_CERT_REVOKED() {
+        return X509_V_ERR_CERT_REVOKED;
+    }
+
+    private static final int X509_V_ERR_UNABLE_TO_GET_CRL = (int) 3L;
+
+    /**
+     * {@snippet lang = c : * #define X509_V_ERR_UNABLE_TO_GET_CRL 3
+     * }
+     */
+    public static int X509_V_ERR_UNABLE_TO_GET_CRL() {
+        return X509_V_ERR_UNABLE_TO_GET_CRL;
+    }
+
     private static final int X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY = (int) 20L;
 
     /**
@@ -774,6 +794,16 @@ public class openssl_h {
      */
     public static int SSL_CTRL_SET_GROUPS() {
         return SSL_CTRL_SET_GROUPS;
+    }
+
+    private static final int SSL_CTRL_SET_GROUPS_LIST = (int) 92L;
+
+    /**
+     * {@snippet lang = c : * #define SSL_CTRL_SET_GROUPS_LIST 92
+     * }
+     */
+    public static int SSL_CTRL_SET_GROUPS_LIST() {
+        return SSL_CTRL_SET_GROUPS_LIST;
     }
 
     private static final int SSL_CTRL_SET_DH_AUTO = (int) 118L;
@@ -3574,52 +3604,52 @@ public class openssl_h {
         }
     }
 
-    private static class X509_STORE_CTX_get0_current_issuer {
-        public static final FunctionDescriptor DESC = FunctionDescriptor.of(openssl_h.C_POINTER, openssl_h.C_POINTER);
+    private static class X509_STORE_CTX_get1_issuer {
+        public static final FunctionDescriptor DESC = FunctionDescriptor.of(openssl_h.C_INT, openssl_h.C_POINTER, openssl_h.C_POINTER, openssl_h.C_POINTER);
 
-        public static final MemorySegment ADDR = openssl_h.findOrThrow("X509_STORE_CTX_get0_current_issuer");
+        public static final MemorySegment ADDR = openssl_h.findOrThrow("X509_STORE_CTX_get1_issuer");
 
         public static final MethodHandle HANDLE = Linker.nativeLinker().downcallHandle(ADDR, DESC);
     }
 
     /**
      * Function descriptor for:
-     * {@snippet lang = c : * X509 *X509_STORE_CTX_get0_current_issuer(const X509_STORE_CTX *ctx)
+     * {@snippet lang = c : * int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
      * }
      */
-    public static FunctionDescriptor X509_STORE_CTX_get0_current_issuer$descriptor() {
-        return X509_STORE_CTX_get0_current_issuer.DESC;
+    public static FunctionDescriptor X509_STORE_CTX_get1_issuer$descriptor() {
+        return X509_STORE_CTX_get1_issuer.DESC;
     }
 
     /**
      * Downcall method handle for:
-     * {@snippet lang = c : * X509 *X509_STORE_CTX_get0_current_issuer(const X509_STORE_CTX *ctx)
+     * {@snippet lang = c : * int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
      * }
      */
-    public static MethodHandle X509_STORE_CTX_get0_current_issuer$handle() {
-        return X509_STORE_CTX_get0_current_issuer.HANDLE;
+    public static MethodHandle X509_STORE_CTX_get1_issuer$handle() {
+        return X509_STORE_CTX_get1_issuer.HANDLE;
     }
 
     /**
      * Address for:
-     * {@snippet lang = c : * X509 *X509_STORE_CTX_get0_current_issuer(const X509_STORE_CTX *ctx)
+     * {@snippet lang = c : * int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
      * }
      */
-    public static MemorySegment X509_STORE_CTX_get0_current_issuer$address() {
-        return X509_STORE_CTX_get0_current_issuer.ADDR;
+    public static MemorySegment X509_STORE_CTX_get1_issuer$address() {
+        return X509_STORE_CTX_get1_issuer.ADDR;
     }
 
     /**
-     * {@snippet lang = c : * X509 *X509_STORE_CTX_get0_current_issuer(const X509_STORE_CTX *ctx)
+     * {@snippet lang = c : * int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
      * }
      */
-    public static MemorySegment X509_STORE_CTX_get0_current_issuer(MemorySegment ctx) {
-        var mh$ = X509_STORE_CTX_get0_current_issuer.HANDLE;
+    public static int X509_STORE_CTX_get1_issuer(MemorySegment issuer, MemorySegment ctx, MemorySegment x) {
+        var mh$ = X509_STORE_CTX_get1_issuer.HANDLE;
         try {
             if (TRACE_DOWNCALLS) {
-                traceDowncall("X509_STORE_CTX_get0_current_issuer", ctx);
+                traceDowncall("X509_STORE_CTX_get1_issuer", issuer, ctx, x);
             }
-            return (MemorySegment) mh$.invokeExact(ctx);
+            return (int) mh$.invokeExact(issuer, ctx, x);
         } catch (Throwable ex$) {
             throw new AssertionError("should not reach here", ex$);
         }

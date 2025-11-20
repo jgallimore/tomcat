@@ -25,12 +25,7 @@ import org.apache.catalina.util.Strftime;
 import org.apache.tomcat.util.res.StringManager;
 
 /**
- * Implements the Server-side #flastmod command
- *
- * @author Bip Thelin
- * @author Paul Speed
- * @author Dan Sandberg
- * @author David Becker
+ * Implements the Server-side #flastmod command.
  */
 public final class SSIFlastmod implements SSICommand {
     private static final StringManager sm = StringManager.getManager(SSIFlastmod.class);

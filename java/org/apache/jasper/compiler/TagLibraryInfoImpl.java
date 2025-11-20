@@ -55,12 +55,6 @@ import org.apache.tomcat.util.descriptor.tld.ValidatorXml;
 
 /**
  * Implementation of the TagLibraryInfo class from the JSP spec.
- *
- * @author Anil K. Vijendran
- * @author Mandar Raje
- * @author Pierre Delisle
- * @author Kin-man Chung
- * @author Jan Luehe
  */
 class TagLibraryInfoImpl extends TagLibraryInfo implements TagConstants {
 

@@ -38,14 +38,12 @@ import org.apache.catalina.connector.Connector;
 import org.apache.catalina.connector.Request;
 import org.apache.tomcat.util.buf.B2CConverter;
 import org.apache.tomcat.util.buf.UDecoder;
+import org.apache.tomcat.util.http.Method;
 import org.apache.tomcat.util.http.RequestUtil;
 import org.apache.tomcat.util.res.StringManager;
 
 /**
  * An implementation of SSIExternalResolver that is used with servlets.
- *
- * @author Dan Sandberg
- * @author David Becker
  */
 public class SSIServletExternalResolver implements SSIExternalResolver {
     private static final StringManager sm = StringManager.getManager(SSIServletExternalResolver.class);
@@ -493,7 +491,7 @@ public class SSIServletExternalResolver implements SSIExternalResolver {
              * Make an assumption that an empty response is a failure. This is a problem if a truly empty file were
              * included, but not sure how else to tell.
              */
-            if (retVal.isEmpty() && !req.getMethod().equalsIgnoreCase("HEAD")) {
+            if (retVal.isEmpty() && !Method.HEAD.equals(req.getMethod())) {
                 throw new IOException(sm.getString("ssiServletExternalResolver.noFile", path));
             }
             return retVal;

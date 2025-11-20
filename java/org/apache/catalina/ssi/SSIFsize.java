@@ -24,12 +24,7 @@ import java.text.DecimalFormat;
 import org.apache.tomcat.util.res.StringManager;
 
 /**
- * Implements the Server-side #fsize command
- *
- * @author Bip Thelin
- * @author Paul Speed
- * @author Dan Sandberg
- * @author David Becker
+ * Implements the Server-side #fsize command.
  */
 public final class SSIFsize implements SSICommand {
     private static final StringManager sm = StringManager.getManager(SSIFsize.class);

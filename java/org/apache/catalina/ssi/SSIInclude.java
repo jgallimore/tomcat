@@ -23,12 +23,7 @@ import java.io.PrintWriter;
 import org.apache.tomcat.util.res.StringManager;
 
 /**
- * Implements the Server-side #include command
- *
- * @author Bip Thelin
- * @author Paul Speed
- * @author Dan Sandberg
- * @author David Becker
+ * Implements the Server-side #include command.
  */
 public final class SSIInclude implements SSICommand {
     private static final StringManager sm = StringManager.getManager(SSIInclude.class);

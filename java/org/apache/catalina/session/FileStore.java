@@ -40,8 +40,6 @@ import org.apache.tomcat.util.res.StringManager;
 /**
  * Concrete implementation of the <b>Store</b> interface that utilizes a file per saved Session in a configured
  * directory. Sessions that are saved are still subject to being expired based on inactivity.
- *
- * @author Craig R. McClanahan
  */
 public final class FileStore extends StoreBase {
 
@@ -63,7 +61,7 @@ public final class FileStore extends StoreBase {
      * The pathname of the directory in which Sessions are stored. This may be an absolute pathname, or a relative path
      * that is resolved against the temporary work directory for this application.
      */
-    private String directory = ".";
+    private volatile String directory = ".";
 
 
     /**
@@ -100,7 +98,7 @@ public final class FileStore extends StoreBase {
      *
      * @param path The new directory path
      */
-    public void setDirectory(String path) {
+    public synchronized void setDirectory(String path) {
         String oldDirectory = this.directory;
         this.directory = path;
         this.directoryFile = null;
@@ -279,12 +277,12 @@ public final class FileStore extends StoreBase {
      * Return a File object representing the pathname to our session persistence directory, if any. The directory will
      * be created if it does not already exist.
      */
-    private File directory() throws IOException {
+    private synchronized File directory() throws IOException {
+        // Synchronised to avoid concurrent attempts to create the directory.
         if (this.directory == null) {
             return null;
         }
         if (this.directoryFile != null) {
-            // NOTE: Race condition is harmless, so do not synchronize
             return this.directoryFile;
         }
         File file = new File(this.directory);

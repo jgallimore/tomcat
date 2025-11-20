@@ -53,14 +53,6 @@ import org.apache.jasper.runtime.JspContextWrapper.ELContextWrapper;
 
 /**
  * Implementation of the PageContext class from the JSP spec. Also doubles as a VariableResolver for the EL.
- *
- * @author Anil K. Vijendran
- * @author Larry Cable
- * @author Hans Bergsten
- * @author Pierre Delisle
- * @author Mark Roth
- * @author Jan Luehe
- * @author Jacob Hookom
  */
 public class PageContextImpl extends PageContext {
 

@@ -22,6 +22,7 @@ import java.io.StringWriter;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -59,11 +60,6 @@ import org.apache.tomcat.util.res.StringManager;
  * structure - will add an overhead that is not needed in most cases)
  * <p>
  * Apache seems to be using a similar method for storing and manipulating headers.
- *
- * @author dac@eng.sun.com
- * @author James Todd [gonzo@eng.sun.com]
- * @author Costin Manolache
- * @author kevin seguin
  */
 public class MimeHeaders {
 
@@ -159,7 +155,7 @@ public class MimeHeaders {
         int j = -1;
         for (int i = 0; i < count; i++) {
             String name = headers[i].getName().toStringType();
-            if (allowedHeaders.contains(name)) {
+            if (allowedHeaders.contains(name.trim().toLowerCase(Locale.ENGLISH))) {
                 ++j;
                 if (j != i) {
                     headers[j] = headers[i];

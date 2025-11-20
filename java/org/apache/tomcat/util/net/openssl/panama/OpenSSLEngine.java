@@ -56,6 +56,7 @@ import static org.apache.tomcat.util.openssl.openssl_h_Macros.*;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.buf.Asn1Parser;
+import org.apache.tomcat.util.http.Method;
 import org.apache.tomcat.util.net.Constants;
 import org.apache.tomcat.util.net.SSLUtil;
 import org.apache.tomcat.util.net.openssl.ciphers.OpenSSLCipherConfigurationParser;
@@ -67,7 +68,7 @@ import org.apache.tomcat.util.openssl.openssl_h_Compatibility;
 import org.apache.tomcat.util.res.StringManager;
 
 /**
- * Implements a {@link SSLEngine} using <a href="https://www.openssl.org/docs/crypto/BIO_s_bio.html#EXAMPLE">OpenSSL BIO
+ * Implements a {@link SSLEngine} using <a href="https://docs.openssl.org/master/man3/BIO_s_bio/#examples">OpenSSL BIO
  * abstractions</a>.
  */
 public final class OpenSSLEngine extends SSLEngine implements SSLUtil.ProtocolInfo {
@@ -1137,6 +1138,9 @@ public final class OpenSSLEngine extends SSLEngine implements SSLUtil.ProtocolIn
                 ok = 1;
                 openssl_h_Compatibility.SSL_set_verify_result(state.ssl, X509_V_OK());
             }
+            if (ok == 0 && errnum == X509_V_ERR_UNABLE_TO_GET_CRL()) {
+                ok = 1;
+            }
             /*
              * Expired certificates vs. "expired" CRLs: by default, OpenSSL turns X509_V_ERR_CRL_HAS_EXPIRED into a
              * "certificate_expired(45)" SSL alert, but that's not really the message we should convey to the peer (at
@@ -1167,9 +1171,10 @@ public final class OpenSSLEngine extends SSLEngine implements SSLUtil.ProtocolIn
                     if (ocspResponse == V_OCSP_CERTSTATUS_REVOKED()) {
                         ok = 0;
                         errnum = X509_STORE_CTX_get_error(x509ctx);
+                        X509_STORE_CTX_set_error(x509ctx, X509_V_ERR_CERT_REVOKED());
                     } else if (ocspResponse == V_OCSP_CERTSTATUS_UNKNOWN()) {
                         errnum = X509_STORE_CTX_get_error(x509ctx);
-                        if (errnum <= 0) {
+                        if (errnum != X509_V_ERR_UNABLE_TO_GET_CRL() && (errnum == X509_V_ERR_APPLICATION_VERIFICATION() || errnum != 0)) {
                             ok = 0;
                         }
                     }
@@ -1195,47 +1200,60 @@ public final class OpenSSLEngine extends SSLEngine implements SSLUtil.ProtocolIn
                 // don't do OCSP checking for valid self-issued certs
                 X509_STORE_CTX_set_error(x509ctx, X509_V_OK());
             } else {
-                // If we can't get the issuer, we cannot perform OCSP verification
-                MemorySegment issuer = X509_STORE_CTX_get0_current_issuer(x509ctx);
-                if (!MemorySegment.NULL.equals(issuer)) {
-                    // sslutils.c ssl_ocsp_request(x509, issuer, x509ctx);
-                    int nid = X509_get_ext_by_NID(x509, NID_info_access(), -1);
-                    if (nid >= 0) {
-                        try (var localArenal = Arena.ofConfined()) {
-                            MemorySegment ext = X509_get_ext(x509, nid);
-                            MemorySegment os = X509_EXTENSION_get_data(ext);
-                            int length = ASN1_STRING_length(os);
-                            MemorySegment data = ASN1_STRING_get0_data(os);
-                            // ocsp_urls = decode_OCSP_url(os);
-                            byte[] asn1String =
-                                    data.reinterpret(length, localArenal, null).toArray(ValueLayout.JAVA_BYTE);
-                            Asn1Parser parser = new Asn1Parser(asn1String);
-                            // Parse the byte sequence
-                            ArrayList<String> urls = new ArrayList<>();
-                            try {
-                                parseOCSPURLs(parser, urls);
-                            } catch (Exception e) {
-                                log.error(sm.getString("engine.ocspParseError"), e);
+                try (var localArena = Arena.ofConfined()) {
+                    // If we can't get the issuer, we cannot perform OCSP verification
+                    MemorySegment issuer = MemorySegment.NULL;
+                    try {
+                        if (openssl_h_Compatibility.OPENSSL && !openssl_h_Compatibility.OPENSSL3) {
+                            issuer = openssl_h_Compatibility.X509_STORE_CTX_get0_current_issuer(x509ctx);
+                        } else {
+                            MemorySegment x509IssuerPointer = localArena.allocateFrom(ValueLayout.ADDRESS, MemorySegment.NULL);
+                            int res = X509_STORE_CTX_get1_issuer(x509IssuerPointer, x509ctx, x509);
+                            if (res > 0) {
+                                issuer = x509IssuerPointer.get(ValueLayout.ADDRESS, 0);
                             }
-                            if (!urls.isEmpty()) {
-                                // Use OpenSSL to build OCSP request
-                                for (String urlString : urls) {
-                                    try {
-                                        URL url = (new URI(urlString)).toURL();
-                                        ocspResponse = processOCSPRequest(url, issuer, x509, x509ctx, localArenal);
-                                        if (log.isDebugEnabled()) {
-                                            log.debug(sm.getString("engine.ocspResponse", urlString,
-                                                    Integer.toString(ocspResponse)));
+                        }
+                        if (!MemorySegment.NULL.equals(issuer)) {
+                            // sslutils.c ssl_ocsp_request(x509, issuer, x509ctx);
+                            int nid = X509_get_ext_by_NID(x509, NID_info_access(), -1);
+                            if (nid >= 0) {
+                                MemorySegment ext = X509_get_ext(x509, nid);
+                                MemorySegment os = X509_EXTENSION_get_data(ext);
+                                int length = ASN1_STRING_length(os);
+                                MemorySegment data = ASN1_STRING_get0_data(os);
+                                // ocsp_urls = decode_OCSP_url(os);
+                                byte[] asn1String =
+                                        data.reinterpret(length, localArena, null).toArray(ValueLayout.JAVA_BYTE);
+                                Asn1Parser parser = new Asn1Parser(asn1String);
+                                // Parse the byte sequence
+                                ArrayList<String> urls = new ArrayList<>();
+                                try {
+                                    parseOCSPURLs(parser, urls);
+                                } catch (Exception e) {
+                                    log.error(sm.getString("engine.ocspParseError"), e);
+                                }
+                                if (!urls.isEmpty()) {
+                                    // Use OpenSSL to build OCSP request
+                                    for (String urlString : urls) {
+                                        try {
+                                            URL url = (new URI(urlString)).toURL();
+                                            ocspResponse = processOCSPRequest(url, issuer, x509, x509ctx, localArena);
+                                            if (log.isDebugEnabled()) {
+                                                log.debug(sm.getString("engine.ocspResponse", urlString,
+                                                        Integer.toString(ocspResponse)));
+                                            }
+                                        } catch (MalformedURLException | URISyntaxException e) {
+                                            log.warn(sm.getString("engine.invalidOCSPURL", urlString));
                                         }
-                                    } catch (MalformedURLException | URISyntaxException e) {
-                                        log.warn(sm.getString("engine.invalidOCSPURL", urlString));
-                                    }
-                                    if (ocspResponse != V_OCSP_CERTSTATUS_UNKNOWN()) {
-                                        break;
+                                        if (ocspResponse != V_OCSP_CERTSTATUS_UNKNOWN()) {
+                                            break;
+                                        }
                                     }
                                 }
                             }
                         }
+                    } finally {
+                        X509_free(issuer);
                     }
                 }
             }
@@ -1274,6 +1292,9 @@ public final class OpenSSLEngine extends SSLEngine implements SSLUtil.ProtocolIn
 
     private static int processOCSPRequest(URL url, MemorySegment issuer, MemorySegment x509,
             MemorySegment /* X509_STORE_CTX */ x509ctx, Arena localArena) {
+        if (openssl_h_Compatibility.BORINGSSL) {
+            return V_OCSP_CERTSTATUS_UNKNOWN();
+        }
         MemorySegment ocspRequest = MemorySegment.NULL;
         MemorySegment ocspResponse = MemorySegment.NULL;
         MemorySegment id;
@@ -1307,7 +1328,7 @@ public final class OpenSSLEngine extends SSLEngine implements SSLUtil.ProtocolIn
             // Content-Length: ocspRequestData.length
             byte[] ocspRequestData = buf.reinterpret(requestLength, localArena, null).toArray(ValueLayout.JAVA_BYTE);
             connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("POST");
+            connection.setRequestMethod(Method.POST);
             connection.setDoInput(true);
             connection.setDoOutput(true);
             connection.setFixedLengthStreamingMode(requestLength);
@@ -1573,7 +1594,7 @@ public final class OpenSSLEngine extends SSLEngine implements SSLUtil.ProtocolIn
         }
 
         private Principal principal(Certificate[] certs) {
-            return ((java.security.cert.X509Certificate) certs[0]).getIssuerX500Principal();
+            return ((java.security.cert.X509Certificate) certs[0]).getSubjectX500Principal();
         }
 
         @Override
