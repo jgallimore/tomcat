@@ -102,6 +102,7 @@ public class SSLHostConfig implements Serializable {
     private LinkedHashSet<Cipher> cipherList = null;
     private List<String> jsseCipherNames = null;
     private boolean honorCipherOrder = false;
+    private boolean ocspEnabled = false;
     private Set<String> protocols = new HashSet<>();
     // Values <0 mean use the implementation default
     private int sessionCacheSize = -1;
@@ -436,6 +437,15 @@ public class SSLHostConfig implements Serializable {
      */
     public String getHostName() {
         return hostName;
+    }
+
+
+    public boolean getOcspEnabled() {
+        return ocspEnabled;
+    }
+
+    public void setOcspEnabled(boolean ocspEnabled) {
+        this.ocspEnabled = ocspEnabled;
     }
 
 
