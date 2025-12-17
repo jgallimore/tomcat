@@ -553,7 +553,7 @@ public class RewriteValve extends ValveBase {
                     chunk.append(REWRITE_DEFAULT_ENCODER.encode(urlStringRewriteEncoded, uriCharset));
                     // Rewriting may have denormalized the URL and added encoded characters
                     // Decode then normalize
-                    String urlStringRewriteDecoded = URLDecoder.decode(urlStringRewriteEncoded, uriCharset);
+                    String urlStringRewriteDecoded = URLDecoder.decode(urlStringRewriteEncoded, uriCharset.name());
                     urlStringRewriteDecoded = RequestUtil.normalize(urlStringRewriteDecoded);
                     request.getCoyoteRequest().decodedURI().setChars(MessageBytes.EMPTY_CHAR_ARRAY, 0, 0);
                     chunk = request.getCoyoteRequest().decodedURI().getCharChunk();

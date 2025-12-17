@@ -51,6 +51,8 @@ public final class MessageBytes implements Cloneable, Serializable {
         was a char[] */
     public static final int T_CHARS = 3;
 
+    public static final char[] EMPTY_CHAR_ARRAY = new char[0];
+
     private int hashCode=0;
     // did we compute the hashcode ?
     private boolean hasHashCode=false;
