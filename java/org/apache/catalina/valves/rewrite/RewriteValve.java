@@ -542,9 +542,8 @@ public class RewriteValve extends ValveBase {
                         contextPath = request.getContextPath();
                     }
                     // Populated the encoded (i.e. undecoded) requestURI
-                    request.getCoyoteRequest().requestURI().setString(null);
+                    request.getCoyoteRequest().requestURI().setChars(MessageBytes.EMPTY_CHAR_ARRAY, 0, 0);
                     CharChunk chunk = request.getCoyoteRequest().requestURI().getCharChunk();
-                    chunk.recycle();
                     if (context) {
                         // This is neither decoded nor normalized
                         chunk.append(contextPath);
