@@ -24,7 +24,7 @@
 version.dev=
 
 # Ensure consistent timestamps for reproducible builds.
-ant.tstamp.now.iso=2025-11-05T19:03:02Z
+ant.tstamp.now.iso=2025-12-02T16:32:48Z
 
 # Enable insertion of detached signatures into the Windows installer.
 do.codesigning=true

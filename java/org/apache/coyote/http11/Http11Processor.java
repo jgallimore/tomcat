@@ -607,6 +607,11 @@ public class Http11Processor extends AbstractProcessor {
             http09 = true;
             http11 = false;
             keepAlive = false;
+            if (!Method.GET.equals(request.getMethod())) {
+                // Send 400, GET is the only allowed method for HTTP/0.9
+                response.setStatus(400);
+                setErrorState(ErrorState.CLOSE_CLEAN, null);
+            }
         } else {
             // Unsupported protocol
             http09 = false;
@@ -774,6 +779,11 @@ public class Http11Processor extends AbstractProcessor {
 
         // Validate host name and extract port if present
         parseHost(hostValueMB);
+
+        // Match host name with SNI if required
+        if (!protocol.checkSni(socketWrapper.getSniHostName(), request.serverName().toString())) {
+            badRequest("http11processor.request.sni");
+        }
 
         if (!getErrorState().isIoAllowed()) {
             getAdapter().log(request, response, 0);
