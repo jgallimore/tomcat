@@ -40,7 +40,6 @@ import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.net.SSLHostConfig;
 import org.apache.tomcat.util.net.TesterSupport;
 import org.apache.tomcat.util.net.TesterSupport.SimpleServlet;
-import org.apache.tomcat.util.openssl.openssl_h_Compatibility;
 
 public class OcspBaseTest extends TomcatBaseTest {
 
@@ -72,10 +71,6 @@ public class OcspBaseTest extends TomcatBaseTest {
                 "org.apache.tomcat.util.net.openssl.OpenSSLImplementation" });
         parameterSets.add(new Object[] { "OpenSSL", Boolean.TRUE, Boolean.FALSE,
                 "org.apache.tomcat.util.net.openssl.OpenSSLImplementation" });
-        parameterSets.add(new Object[] { "OpenSSL-FFM", Boolean.TRUE, Boolean.TRUE,
-                "org.apache.tomcat.util.net.openssl.panama.OpenSSLImplementation" });
-        parameterSets.add(new Object[] { "OpenSSL-FFM", Boolean.TRUE, Boolean.FALSE,
-                "org.apache.tomcat.util.net.openssl.panama.OpenSSLImplementation" });
 
         return parameterSets;
     }
@@ -109,9 +104,6 @@ public class OcspBaseTest extends TomcatBaseTest {
     protected void doTest(boolean clientCertValid, boolean serverCertValid, ClientCertificateVerification verifyClientCert,
             boolean verifyServerCert, Boolean softFail) throws Exception {
 
-        if ("OpenSSL-FFM".equals(connectorName)) {
-            Assume.assumeFalse(openssl_h_Compatibility.BORINGSSL || openssl_h_Compatibility.isLibreSSLPre35());
-        }
         Assume.assumeFalse(!useOpenSSLTrust && verifyClientCert == ClientCertificateVerification.OPTIONAL_NO_CA);
 
         Tomcat tomcat = getTomcatInstance();

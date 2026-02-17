@@ -35,6 +35,7 @@ import org.apache.coyote.CloseNowException;
 import org.apache.coyote.InputBuffer;
 import org.apache.coyote.Request;
 import org.apache.coyote.Response;
+import org.apache.coyote.http11.AbstractHttp11Protocol;
 import org.apache.coyote.http11.HttpOutputBuffer;
 import org.apache.coyote.http11.OutputFilter;
 import org.apache.coyote.http11.filters.SavedRequestInputFilter;
@@ -458,7 +459,7 @@ class Stream extends AbstractNonZeroStream implements HeaderEmitter {
             coyoteRequest.serverName().setString(value);
         }
         // Match host name with SNI if required
-        if (!handler.getProtocol().getHttp11Protocol().checkSni(handler.getSniHostName(), coyoteRequest.serverName().getString())) {
+        if (!((AbstractHttp11Protocol<?>) handler.getProtocol().getHttp11Protocol()).checkSni(handler.getSniHostName(), coyoteRequest.serverName().getString())) {
             throw new HpackException(sm.getString("stream.host.sni", getConnectionId(), getIdAsString(), value,
                     handler.getSniHostName()));
         }

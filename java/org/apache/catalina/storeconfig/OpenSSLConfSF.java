@@ -17,6 +17,7 @@
 package org.apache.catalina.storeconfig;
 
 import java.io.PrintWriter;
+import java.util.Collections;
 import java.util.Set;
 
 import org.apache.tomcat.util.net.openssl.OpenSSLConf;
@@ -27,7 +28,7 @@ import org.apache.tomcat.util.net.openssl.OpenSSLConfCmd;
  */
 public class OpenSSLConfSF extends StoreFactoryBase {
 
-    private static final Set<String> INTERNAL_COMMANDS = Set.of(OpenSSLConfCmd.NO_OCSP_CHECK);
+    private static final Set<String> INTERNAL_COMMANDS = Collections.singleton(OpenSSLConfCmd.NO_OCSP_CHECK);
 
     /**
      * Store nested OpenSSLConfCmd elements.

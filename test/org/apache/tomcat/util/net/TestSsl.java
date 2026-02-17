@@ -23,7 +23,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -59,7 +61,6 @@ import org.apache.catalina.startup.TomcatBaseTest;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.net.SSLHostConfigCertificate.Type;
 import org.apache.tomcat.util.net.TesterSupport.ClientSSLSocketFactory;
-import org.apache.tomcat.util.net.openssl.OpenSSLStatus;
 import org.apache.tomcat.websocket.server.WsContextListener;
 
 /**
@@ -229,8 +230,6 @@ public class TestSsl extends TomcatBaseTest {
         sslHostConfig.setHostName("foobar");
         tomcat.getConnector().addSslHostConfig(sslHostConfig);
 
-        TesterSupport.configureSSLImplementation(tomcat, sslImplementationName, useOpenSSL);
-
         tomcat.start();
 
         // Send SNI and it matches
@@ -256,7 +255,7 @@ public class TestSsl extends TomcatBaseTest {
         client.connect(sslSocket);
         client.processRequest(true);
 
-        Assert.assertEquals(HttpServletResponse.SC_OK, client.getStatusCode());
+        Assert.assertTrue(client.isResponse200());
         Assert.assertTrue(client.getResponseBody().contains("<a href=\"../helloworld.html\">"));
         client.disconnect();
         client.reset();
@@ -278,7 +277,7 @@ public class TestSsl extends TomcatBaseTest {
         client.connect(sslSocket);
         client.processRequest(true);
 
-        Assert.assertEquals(HttpServletResponse.SC_BAD_REQUEST, client.getStatusCode());
+        Assert.assertTrue(client.isResponse400());
         client.disconnect();
         client.reset();
 
@@ -300,7 +299,7 @@ public class TestSsl extends TomcatBaseTest {
         client.connect(sslSocket);
         client.processRequest(true);
 
-        Assert.assertEquals(HttpServletResponse.SC_OK, client.getStatusCode());
+        Assert.assertTrue(client.isResponse200());
         client.disconnect();
         client.reset();
         tomcat.getConnector().setProperty("defaultSSLHostConfigName", "_default_");
@@ -324,7 +323,7 @@ public class TestSsl extends TomcatBaseTest {
         client.connect(sslSocket);
         client.processRequest(true);
 
-        Assert.assertEquals(HttpServletResponse.SC_OK, client.getStatusCode());
+        Assert.assertTrue(client.isResponse200());
         client.disconnect();
         client.reset();
 

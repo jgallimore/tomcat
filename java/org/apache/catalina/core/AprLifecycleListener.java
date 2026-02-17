@@ -241,16 +241,6 @@ public class AprLifecycleListener implements LifecycleListener {
          * The minimum recommended version is increased when there is a change in Tomcat Native that while not required
          * is recommended (such as bug fixes).
          */
-        int rqver;
-        int rcver;
-        if (tcnMajor == 1) {
-            rqver = 1000 + TCN_1_REQUIRED_MINOR * 100 + TCN_1_REQUIRED_PATCH;
-            rcver = 1000 + TCN_1_RECOMMENDED_MINOR * 100 + TCN_1_RECOMMENDED_PATCH;
-        } else {
-            rqver = TCN_REQUIRED_MAJOR * 1000 + TCN_REQUIRED_MINOR * 100 + TCN_REQUIRED_PATCH;
-            rcver = TCN_RECOMMENDED_MAJOR * 1000 + TCN_RECOMMENDED_MINOR * 100 + TCN_RECOMMENDED_PV;
-        }
-
         if (tcnVersion < rqver) {
             log.error(sm.getString("aprListener.tcnInvalid",
                     Library.versionString(),

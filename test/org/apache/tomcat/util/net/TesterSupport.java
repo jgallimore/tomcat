@@ -88,6 +88,8 @@ public final class TesterSupport {
     public static final String CLIENT_JKS = SSL_DIR + CLIENT_ALIAS + ".jks";
     public static final String LOCALHOST_EC_JKS = SSL_DIR + "localhost-ec.jks";
     public static final String LOCALHOST_RSA_JKS = SSL_DIR + "localhost-rsa.jks";
+    public static final String LOCALHOST_CRL_RSA_JKS = SSL_DIR + "localhost-crl-rsa.jks";
+    public static final String CLIENT_CRL_JKS = SSL_DIR + "user2-crl.jks";
     public static final String LOCALHOST_KEYPASS_JKS = SSL_DIR + "localhost-rsa-copy1.jks";
     public static final String JKS_PASS = "changeit";
     public static final String JKS_KEY_PASS = "tomcatpass";
@@ -151,6 +153,14 @@ public final class TesterSupport {
         initSsl(tomcat, LOCALHOST_RSA_JKS, null, null);
     }
 
+    public static void initSsl(Tomcat tomcat, String keystore, boolean opensslTrust) {
+        initSsl(tomcat, keystore, null, null);
+        if (opensslTrust) {
+            SSLHostConfig sslHostConfig = tomcat.getConnector().findSslHostConfigs()[0];
+            sslHostConfig.setCaCertificateFile(new File(CA_CERT_PEM).getAbsolutePath());
+        }
+    }
+
     protected static void initSsl(Tomcat tomcat, String keystore,
             String keystorePass, String keyPass) {
 
@@ -187,6 +197,23 @@ public final class TesterSupport {
             certificate.setCertificateKeyFile(new File(LOCALHOST_RSA_KEY_PEM).getAbsolutePath());
             sslHostConfig.setCaCertificateFile(new File(CA_CERT_PEM).getAbsolutePath());
         }
+    }
+
+    protected static KeyManager[] getUserKeyManagers(String keyStore) throws Exception {
+        KeyManagerFactory kmf = KeyManagerFactory.getInstance(
+                KeyManagerFactory.getDefaultAlgorithm());
+        kmf.init(getKeyStore(keyStore), JKS_PASS.toCharArray());
+        KeyManager[] managers = kmf.getKeyManagers();
+        KeyManager manager;
+        for (int i=0; i < managers.length; i++) {
+            manager = managers[i];
+            if (manager instanceof X509ExtendedKeyManager) {
+                managers[i] = new TrackingExtendedKeyManager((X509ExtendedKeyManager)manager);
+            } else if (manager instanceof X509KeyManager) {
+                managers[i] = new TrackingKeyManager((X509KeyManager)manager);
+            }
+        }
+        return managers;
     }
 
     protected static KeyManager[] getUser1KeyManagers() throws Exception {
@@ -315,6 +342,24 @@ public final class TesterSupport {
         }
 
         return true;
+    }
+
+    public static void configureSSLImplementation(Tomcat tomcat, String sslImplementationName, boolean useOpenSSL) {
+        try {
+            Class.forName(sslImplementationName);
+        } catch (Exception e) {
+            Assume.assumeNoException(e);
+        }
+        if (useOpenSSL) {
+            AprLifecycleListener listener = new AprLifecycleListener();
+            Assume.assumeTrue(AprLifecycleListener.isAprAvailable());
+            StandardServer server = (StandardServer) tomcat.getServer();
+            server.addLifecycleListener(listener);
+        }
+        Connector connector = tomcat.getConnector();
+        if (!connector.getProtocolHandlerClassName().contains("Apr")) {
+            Assert.assertTrue(connector.setProperty("sslImplementationName", sslImplementationName));
+        }
     }
 
     public static void configureSSLImplementation(Tomcat tomcat, String sslImplementationName) {
