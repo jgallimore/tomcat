@@ -39,7 +39,7 @@ maven.asf.release.repo.url=https://repository.tomitribe.com/service/local/stagin
 maven.asf.release.repo.repositoryId=tomitribe.releases
 
 # Release version info
-maven.asf.release.deploy.version=10.0.28-TT.20
+maven.asf.release.deploy.version=10.0.28-TT.21
 
 #Where do we load the libraries from
 tomcat.lib.path=../../output/build/lib
