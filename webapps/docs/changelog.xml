@@ -133,6 +133,9 @@
   <subsection name="Coyote">
     <changelog>
       <fix>
+        Fix case sensitive handling of the protocol host name. (remm)
+      </fix>
+      <fix>
         Correct a regression introduced in 10.1.11 and use the correct
         constant when constructing the default value for the
         <code>certificateKeystoreFile</code> attribute of an
