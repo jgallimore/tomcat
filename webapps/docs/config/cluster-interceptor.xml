@@ -215,23 +215,18 @@
    </p>
    <attributes>
      <attribute name="encryptionAlgorithm" required="false">
-       <p>The encryption algorithm to be used, including the mode and padding.
-       Please see
+       The encryption algorithm to be used, including the mode and padding. Please see
        <a href="https://docs.oracle.com/javase/8/docs/technotes/guides/security/StandardNames.html">https://docs.oracle.com/javase/8/docs/technotes/guides/security/StandardNames.html</a>
-       for the standard JCA names that can be used. Algorithms from other JCA
-       providers are also supported.</p>
+       for the standard JCA names that can be used.
 
-       <p>The EncryptInterceptor currently supports the following standard
+       EncryptInterceptor currently supports the following
        <a href="https://en.wikipedia.org/wiki/Block_cipher_mode_of_operation">block-cipher modes</a>:
-       CBC, CFB, OFB and GCM. Of these, it is recommended that GCM is always
-       used.</p>
+       CBC, OFB, CFB, and GCM.
 
-       <p>The length of the key will specify the flavor of the encryption
-       algorithm to be used, if applicable (e.g. AES-128 versus AES-256).</p>
+       The length of the key will specify the flavor of the encryption algorithm
+       to be used, if applicable (e.g. AES-128 versus AES-256).
 
-       <p>The default algorithm is <code>AES/CBC/PKCS5Padding</code> for
-       backwards compatability but it is recommended that
-       <code>AES/GCM/NoPadding</code> is used.</p>
+       The default algorithm is <code>AES/CBC/PKCS5Padding</code>.
      </attribute>
      <attribute name="encryptionKey" required="true">
        The key to be used with the encryption algorithm.
